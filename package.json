@@ -1,0 +1,1 @@
+{ "name": "fpp-quote", "private": true, "scripts": { "build": "node build.js" } }
