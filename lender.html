@@ -165,6 +165,7 @@
           <div class="status" data-status></div>
           <input type="file" accept="image/*,.pdf" data-doc="fourpoint">
         </label>
+      <label class="drop"><div class="ico">📎</div><div class="t">Other / misc document</div><div class="d">Anything else — we&rsquo;ll read it &amp; add it</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="misc"></label>
       </div>
       <div class="note" id="aiNote">
         <strong>Auto-fill is in setup.</strong> Files attach to this request now. Once the AI reader is connected, uploads read the documents and fill the fields automatically.
@@ -364,7 +365,6 @@
         <button type="button" class="btn primary block" id="btnEmail">📧 Send quote request</button>
         <button type="button" class="btn ghost block" id="btnCopy">📋 Copy summary</button>
       </div>
-      <button type="button" class="btn ghost block" id="btnDownload" style="margin-top:10px">⬇️ Download request (.txt)</button>
       <p class="hint" style="margin-top:10px;text-align:center">"Send" opens your email to Floridian Policy Pros with everything filled in. Attach the uploaded files to that email before sending.</p>
     </section>
 
@@ -538,7 +538,7 @@ function textSummary(){
 }
 
 /* uploads + AI auto-fill */
-const DOC_LABELS={loanapp:"Loan application (1003)",contract:"Purchase contract",appraisal:"Appraisal",windmit:"Wind mitigation report",clientinfo:"Client info sheet",fourpoint:"4-point inspection",claims:"Claim docs / loss run"};
+const DOC_LABELS={loanapp:"Loan application (1003)",contract:"Purchase contract",appraisal:"Appraisal",windmit:"Wind mitigation report",clientinfo:"Client info sheet",fourpoint:"4-point inspection",claims:"Claim docs / loss run",misc:"Other document"};
 const uploaded={};
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}
 $$('input[type=file][data-doc]').forEach(inp=>{
@@ -596,10 +596,6 @@ $("#btnEmail").onclick=()=>{
   toast("Opening your email…");
 };
 $("#btnCopy").onclick=async()=>{ try{ await navigator.clipboard.writeText(textSummary()); toast("Summary copied"); }catch{ toast("Copy failed — use Download"); } };
-$("#btnDownload").onclick=()=>{
-  const blob=new Blob([textSummary()],{type:"text/plain"}); const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob); a.download=`lender-quote-${val("lastName")||"client"}.txt`; a.click(); toast("Downloaded");
-};
 
 
 $$('.drop').forEach(function(drop){

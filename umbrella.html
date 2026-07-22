@@ -68,6 +68,7 @@
         <div class="uploads">
           <label class="drop"><div class="ico">🏠</div><div class="t">Home dec page</div><div class="d">Liability limit</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="dec"></label>
           <label class="drop"><div class="ico">🚗</div><div class="t">Auto dec page</div><div class="d">BI liability limits</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="autodec"></label>
+        <label class="drop"><div class="ico">📎</div><div class="t">Other / misc document</div><div class="d">Anything else — we&rsquo;ll read it &amp; add it</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="misc"></label>
         </div>
         <div class="note" id="aiNote"><strong>Smart auto-fill is ON.</strong> Upload your home &amp; auto decs and we'll pull the carriers and limits — fields flash green.</div>
       </section>
@@ -148,7 +149,7 @@ if(/Mac|iPhone|iPad/.test(navigator.platform)){var _bk=$("#bmKey");if(_bk)_bk.in
 function toggle(sel,on){$$(sel).forEach(e=>e.classList.toggle("hidden",!on));}
 function syncConditionals(){toggle(".claims-dep",$("#hasClaims").value==="Yes");}
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}
-const DOC_LABELS={dec:"Home dec",autodec:"Auto dec"};
+const DOC_LABELS={dec:"Home dec",autodec:"Auto dec",misc:"Other document"};
 const uploaded={};
 $$('input[type=file][data-doc]').forEach(inp=>{inp.addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;const key=inp.dataset.doc;uploaded[key]=f.name;const drop=inp.closest(".drop");const st=drop?drop.querySelector("[data-status]"):null;if(st)st.textContent="Reading…";if(CONFIG.aiEndpoint){try{const b64=await fileToBase64(f);const res=await fetch(CONFIG.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({docType:key,mimeType:f.type,dataBase64:b64})});const data=await res.json();const n=applyExtracted(data.fields||{});if(st)st.textContent=n>0?("✓ Filled "+n+" field"+(n>1?"s":"")):"✓ Attached";if(n>0)toast("✨ Filled "+n+" field"+(n>1?"s":"")+" from your "+DOC_LABELS[key]);}catch(err){if(st)st.textContent="✓ Attached (couldn't auto-read)";}}else if(st){st.textContent="✓ Attached";}buildSummary();});});
 function setField(name,value){const el=form.elements[name];if(!el||value==null||value==="")return false;if(el.tagName==="SELECT"){let m=null;for(const o of el.options){if(o.value.toLowerCase()===String(value).toLowerCase()||o.text.toLowerCase()===String(value).toLowerCase()){m=o.value;break;}}if(m!=null){el.value=m;}else return false;}else{if(el.value)return false;el.value=value;}el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1000);return true;}

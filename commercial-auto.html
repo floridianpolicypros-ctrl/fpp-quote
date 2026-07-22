@@ -90,6 +90,7 @@
           <label class="drop"><div class="ico">🚚</div><div class="t">Vehicle / unit list</div><div class="d">Years, makes, VINs, values</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="registration"></label>
           <label class="drop"><div class="ico">🪪</div><div class="t">Driver list / licenses</div><div class="d">Names, DOB, DL #</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="dl"></label>
           <label class="drop"><div class="ico">📋</div><div class="t">Loss runs / other</div><div class="d">Filings, IFTA, anything</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="claims"></label>
+        <label class="drop"><div class="ico">📎</div><div class="t">Other / misc document</div><div class="d">Anything else — we&rsquo;ll read it &amp; add it</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="misc"></label>
         </div>
         <div class="note" id="aiNote"><strong>Smart auto-fill is ON.</strong> Upload a dec page, unit list, or driver list and we'll read it and fill the form — fields flash green as they fill.</div>
       </section>
@@ -197,7 +198,7 @@ function syncConditionals(){
 }
 
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}
-const DOC_LABELS={autodec:"Commercial auto dec",registration:"Unit list",dl:"Driver list",claims:"Loss runs / other"};
+const DOC_LABELS={autodec:"Commercial auto dec",registration:"Unit list",dl:"Driver list",claims:"Loss runs / other",misc:"Other document"};
 const uploaded={};
 $$('input[type=file][data-doc]').forEach(inp=>{
   inp.addEventListener("change",async e=>{

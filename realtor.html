@@ -92,6 +92,7 @@
         <label class="drop"><div class="ico">📃</div><div class="t">Prior / current dec page</div><div class="d">Existing coverage</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="dec"></label>
         <label class="drop"><div class="ico">🗂️</div><div class="t">Client info sheet</div><div class="d">Any format</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="clientinfo"></label>
         <label class="drop"><div class="ico">📷</div><div class="t">Anything else</div><div class="d">Photo or PDF</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="other"></label>
+      <label class="drop"><div class="ico">📎</div><div class="t">Other / misc document</div><div class="d">Anything else — we&rsquo;ll read it &amp; add it</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="misc"></label>
       </div>
       <div class="note" id="aiNote"><strong>Auto-fill is in setup.</strong> Files attach to this request now. Once the AI reader is connected, uploads fill the fields automatically.</div>
     </section>
@@ -165,7 +166,6 @@
         <button type="button" class="btn primary block" id="btnEmail">📧 Send request</button>
         <button type="button" class="btn ghost block" id="btnCopy">📋 Copy summary</button>
       </div>
-      <button type="button" class="btn ghost block" id="btnDownload" style="margin-top:10px">⬇️ Download (.txt)</button>
       <p class="hint" style="margin-top:10px;text-align:center">"Send" opens your email to Floridian Policy Pros with everything filled in.</p>
     </section>
   </form>
@@ -226,7 +226,7 @@ function textSummary(){
   L.push("");L.push("=== FILES ATTACHED ===");L.push(ups.length?ups.map(k=>"• "+DOC_LABELS[k]+": "+uploaded[k]).join("\n")+"\n(Please attach these to this email.)":"None uploaded.");
   return L.join("\n");
 }
-const DOC_LABELS={mls:"MLS listing",imapp:"iMapp report",papa:"PAPA / Property Appraiser",windmit:"Wind mitigation",fourpoint:"4-point inspection",dec:"Prior dec page",clientinfo:"Client info sheet",other:"Other document",claims:"Claim docs / loss run"};
+const DOC_LABELS={mls:"MLS listing",imapp:"iMapp report",papa:"PAPA / Property Appraiser",windmit:"Wind mitigation",fourpoint:"4-point inspection",dec:"Prior dec page",clientinfo:"Client info sheet",other:"Other document",claims:"Claim docs / loss run",misc:"Other document"};
 const uploaded={};
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}
 $$('input[type=file][data-doc]').forEach(inp=>{inp.addEventListener("change",async e=>{
@@ -244,7 +244,6 @@ $$('.drop').forEach(function(drop){drop.addEventListener('dragover',function(e){
 function validateRequired(){const missing=REQUIRED.filter(n=>!val(n));if(missing.length){toast("Please complete the required fields");form.elements[missing[0]].focus();form.elements[missing[0]].scrollIntoView({behavior:"smooth",block:"center"});return false;}if(!$("#consent").checked){toast("Please check the box");return false;}return true;}
 $("#btnEmail").onclick=()=>{if(!validateRequired())return;const subj=`Realtor Prelim/Referral — ${[val("firstName"),val("lastName")].filter(Boolean).join(" ")||val("rName")} — ${val("propAddress")}`;const body=textSummary()+"\n\n(Reminder: attach any uploaded files to this email.)";window.location.href=`mailto:${CONFIG.agentEmail}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;toast("Opening your email…");};
 $("#btnCopy").onclick=async()=>{try{await navigator.clipboard.writeText(textSummary());toast("Summary copied");}catch{toast("Copy failed — use Download");}};
-$("#btnDownload").onclick=()=>{const blob=new Blob([textSummary()],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`realtor-quote-${val("lastName")||val("rName")||"client"}.txt`;a.click();toast("Downloaded");};
 form.addEventListener("input",()=>{syncConditionals();buildSummary();});
 form.addEventListener("change",()=>{syncConditionals();buildSummary();});
 if(CONFIG.aiEndpoint)$("#aiNote").innerHTML="<strong>Smart auto-fill is ON.</strong> Drop in an MLS sheet, dec page, or contract — we'll read it and fill the form. Fields flash green as they fill.";

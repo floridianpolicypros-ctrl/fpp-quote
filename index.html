@@ -171,6 +171,7 @@
           <div class="status" data-status></div>
           <input type="file" accept="image/*,.pdf" data-doc="mortgage">
         </label>
+      <label class="drop"><div class="ico">📎</div><div class="t">Other / misc document</div><div class="d">Anything else — we&rsquo;ll read it &amp; add it</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="misc"></label>
       </div>
       <div class="note" id="aiNote">
         <strong>Auto-fill is in setup.</strong> Your files are attached to this request now. Once the AI reader is connected
@@ -509,7 +510,6 @@
         <button type="button" class="btn primary block" id="btnEmail">📧 Send my quote request</button>
         <button type="button" class="btn ghost block" id="btnCopy">📋 Copy summary</button>
       </div>
-      <button type="button" class="btn ghost block" id="btnDownload" style="margin-top:10px">⬇️ Download my request (.txt)</button>
       <p class="hint" style="margin-top:10px;text-align:center">"Send" opens your email to Floridian Policy Pros with everything filled in. Attach your uploaded photos to that email before sending.</p>
 
       <div id="bookingRow" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
@@ -738,7 +738,7 @@ function textSummary(){
 }
 
 /* ================= uploads + LIVE AI auto-fill ================= */
-const DOC_LABELS={dec:"Declarations page",fourpoint:"4-Point / inspection",windmit:"Wind mitigation",mls:"MLS sheet",mortgage:"Mortgage statement",claims:"Claim docs / loss run"};
+const DOC_LABELS={dec:"Declarations page",fourpoint:"4-Point / inspection",windmit:"Wind mitigation",mls:"MLS sheet",mortgage:"Mortgage statement",claims:"Claim docs / loss run",misc:"Other document"};
 const uploaded={};
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}
 
@@ -843,12 +843,6 @@ $("#btnEmail").onclick=()=>{
 $("#btnCopy").onclick=async()=>{
   try{ await navigator.clipboard.writeText(textSummary()); toast("Summary copied — paste it to your agent"); }
   catch{ toast("Copy failed — use Download instead"); }
-};
-$("#btnDownload").onclick=()=>{
-  const blob=new Blob([textSummary()],{type:"text/plain"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
-  a.download=`quote-request-${val("lastName")||"client"}.txt`; a.click();
-  toast("Downloaded");
 };
 
 /* ================= wire up ================= */
