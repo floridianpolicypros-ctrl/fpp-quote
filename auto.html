@@ -242,12 +242,12 @@ const uploaded={};
 $$('input[type=file][data-doc]').forEach(inp=>{
   inp.addEventListener("change",async e=>{
     const f=e.target.files[0]; if(!f) return;
-    const key=inp.dataset.doc; uploaded[key]=f.name;
+    const key=inp.dataset.doc; uploaded[key]={name:f.name,type:f.type||"application/octet-stream",b64:await fileToBase64(f)};
     const drop=inp.closest(".drop"); const st=drop?drop.querySelector("[data-status]"):null;
     if(st) st.textContent="Reading…";
     if(CONFIG.aiEndpoint){
       try{
-        const b64=await fileToBase64(f);
+        const b64=uploaded[key].b64;
         const res=await fetch(CONFIG.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({docType:key,mimeType:f.type,dataBase64:b64})});
         const data=await res.json();
@@ -329,7 +329,7 @@ function textSummary(){
   line("Years insured",val("yearsInsured"));line("Accidents/tickets 5yr",val("hasIncidents"));line("How many",val("incidentCount"));line("Detail",val("incidents"));
   line("Notes",val("notes"));
   const ups=Object.keys(uploaded);
-  L.push("");L.push("=== FILES ===");L.push(ups.length?ups.map(k=>"• "+DOC_LABELS[k]+": "+uploaded[k]).join("\n")+"\n(Please attach these to this email.)":"None uploaded.");
+  L.push("");L.push("=== FILES ===");L.push(ups.length?ups.map(k=>"• "+DOC_LABELS[k]+": "+uploaded[k].name).join("\n")+"\n(Please attach these to this email.)":"None uploaded.");
   return L.join("\n");
 }
 
@@ -340,8 +340,12 @@ form.addEventListener("submit",e=>{
   if(!val("firstName")||!val("lastName")||!val("currentAddress")){toast("Please add your name and garaging address.");return;}
   const subj=`Auto Quote — ${val("firstName")} ${val("lastName")} — ${[val("v1Year"),val("v1Make"),val("v1Model")].filter(Boolean).join(" ")}`;
   const body=textSummary();
-  window.location.href=`mailto:${CONFIG.agentEmail}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
-  toast("Opening your email — attach any photos, then hit send.");
+  const files=Object.entries(uploaded).map(([k,v])=>({name:(v&&v.name)||String(v),type:(v&&v.type)||"",dataBase64:(v&&v.b64)||""})).filter(f=>f.dataBase64);
+  const fields={}; for(const el of form.elements){ if(!el.name||el.type==="file") continue; fields[el.name]=el.type==="checkbox"?(el.checked?"Yes":"No"):el.value; }
+  toast("Sending your request…");
+  fetch("/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({formType:document.title.split("—")[0].trim()||location.pathname,subject:subj,fields,files})})
+    .then(r=>r.json()).then(d=>{ if(d&&d.ok){ toast("✅ Sent! Carlos has your request — docs and all."); } else { throw new Error((d&&d.error)||"send failed"); } })
+    .catch(()=>{ window.location.href=`mailto:${CONFIG.agentEmail||CONFIG.recipient}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`; toast("Opening your email instead — attach files and hit send."); });
 });
 syncConditionals();buildSummary();
 </script>

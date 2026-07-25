@@ -223,14 +223,14 @@ function textSummary(){
   line("Flood",val("floodWanted"));
   S("NOTES");line("Notes",val("notes"));
   const ups=Object.keys(uploaded).filter(k=>uploaded[k]);
-  L.push("");L.push("=== FILES ATTACHED ===");L.push(ups.length?ups.map(k=>"• "+DOC_LABELS[k]+": "+uploaded[k]).join("\n")+"\n(Please attach these to this email.)":"None uploaded.");
+  L.push("");L.push("=== FILES ATTACHED ===");L.push(ups.length?ups.map(k=>"• "+DOC_LABELS[k]+": "+uploaded[k].name).join("\n")+"\n(Please attach these to this email.)":"None uploaded.");
   return L.join("\n");
 }
 const DOC_LABELS={mls:"MLS listing",imapp:"iMapp report",papa:"PAPA / Property Appraiser",windmit:"Wind mitigation",fourpoint:"4-point inspection",dec:"Prior dec page",clientinfo:"Client info sheet",other:"Other document",claims:"Claim docs / loss run",misc:"Other document"};
 const uploaded={};
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}
 $$('input[type=file][data-doc]').forEach(inp=>{inp.addEventListener("change",async e=>{
-  const f=e.target.files[0];if(!f)return;const key=inp.dataset.doc;uploaded[key]=f.name;
+  const f=e.target.files[0];if(!f)return;const key=inp.dataset.doc;uploaded[key]={name:f.name,type:f.type||"application/octet-stream",b64:await fileToBase64(f)};
   const drop=inp.closest(".drop"),st=drop.querySelector("[data-status]");drop.classList.remove("reading");drop.classList.add("filled");st.textContent="✓ "+f.name;
   if(CONFIG.aiEndpoint){drop.classList.add("reading");st.innerHTML='<span class="spin"></span> Reading '+f.name+'…';
     try{const dataBase64=await fileToBase64(f);const res=await fetch(CONFIG.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({docType:key,filename:f.name,mimeType:f.type||"application/octet-stream",dataBase64})});
@@ -242,7 +242,12 @@ function setSelect(sel,v){const opts=Array.from(sel.options),t=String(v).toLower
 function applyExtracted(fields){let n=0;Object.entries(fields||{}).forEach(([k,v])=>{const el=form.elements[k];if(!el||v==null||v==="")return;if(el.tagName==="SELECT"){if(!setSelect(el,v))return;}else{el.value=v;}n++;const box=el.closest(".field")||el;box.classList.add("justfilled");setTimeout(()=>box.classList.remove("justfilled"),2200);});syncConditionals();buildSummary();return n;}
 $$('.drop').forEach(function(drop){drop.addEventListener('dragover',function(e){e.preventDefault();drop.classList.add('dragover');});drop.addEventListener('dragenter',function(e){e.preventDefault();drop.classList.add('dragover');});drop.addEventListener('dragleave',function(){drop.classList.remove('dragover');});drop.addEventListener('drop',function(e){e.preventDefault();drop.classList.remove('dragover');var inp=drop.querySelector('input[type=file]');if(inp&&e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length){try{var dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);inp.files=dt.files;}catch(_){}inp.dispatchEvent(new Event('change',{bubbles:true}));}});});
 function validateRequired(){const missing=REQUIRED.filter(n=>!val(n));if(missing.length){toast("Please complete the required fields");form.elements[missing[0]].focus();form.elements[missing[0]].scrollIntoView({behavior:"smooth",block:"center"});return false;}if(!$("#consent").checked){toast("Please check the box");return false;}return true;}
-$("#btnEmail").onclick=()=>{if(!validateRequired())return;const subj=`Realtor Prelim/Referral — ${[val("firstName"),val("lastName")].filter(Boolean).join(" ")||val("rName")} — ${val("propAddress")}`;const body=textSummary()+"\n\n(Reminder: attach any uploaded files to this email.)";window.location.href=`mailto:${CONFIG.agentEmail}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;toast("Opening your email…");};
+$("#btnEmail").onclick=()=>{if(!validateRequired())return;const subj=`Realtor Prelim/Referral — ${[val("firstName"),val("lastName")].filter(Boolean).join(" ")||val("rName")} — ${val("propAddress")}`;const body=textSummary()+"\n\n(Reminder: attach any uploaded files to this email.)";const files=Object.entries(uploaded).map(([k,v])=>({name:(v&&v.name)||String(v),type:(v&&v.type)||"",dataBase64:(v&&v.b64)||""})).filter(f=>f.dataBase64);
+  const fields={}; for(const el of form.elements){ if(!el.name||el.type==="file") continue; fields[el.name]=el.type==="checkbox"?(el.checked?"Yes":"No"):el.value; }
+  toast("Sending your request…");
+  fetch("/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({formType:document.title.split("—")[0].trim()||location.pathname,subject:subj,fields,files})})
+    .then(r=>r.json()).then(d=>{ if(d&&d.ok){ toast("✅ Sent! Carlos has your request — docs and all."); } else { throw new Error((d&&d.error)||"send failed"); } })
+    .catch(()=>{ window.location.href=`mailto:${CONFIG.agentEmail||CONFIG.recipient}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`; toast("Opening your email instead — attach files and hit send."); });};
 $("#btnCopy").onclick=async()=>{try{await navigator.clipboard.writeText(textSummary());toast("Summary copied");}catch{toast("Copy failed — use Download");}};
 form.addEventListener("input",()=>{syncConditionals();buildSummary();});
 form.addEventListener("change",()=>{syncConditionals();buildSummary();});
