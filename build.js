@@ -54,13 +54,19 @@ async function handleSubmit(request, env) {
         Object.entries(fields).filter(([k,v])=>v).map(([k,v])=>k+": "+v).join("\\n")+
         "\\n\\nATTACHED DOCUMENTS: "+(files.map(f=>f.name).join(", ")||"none")+
         "\\n\\nProduce the full Quote Summary now."});
-      const r = await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{"content-type":"application/json","x-api-key":env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
-        body: JSON.stringify({model:"claude-sonnet-5",max_tokens:8000,system:SUMMARY_PROMPT,
-          messages:[{role:"user",content}]})
-      });
-      const out = await r.json();
+      let out = null;
+      for (let attempt=0; attempt<3; attempt++) {
+        const r = await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"content-type":"application/json","x-api-key":env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
+          body: JSON.stringify({model:"claude-sonnet-5",max_tokens:8000,system:SUMMARY_PROMPT,
+            messages:[{role:"user",content}]})
+        });
+        out = await r.json();
+        const retriable = out.error && /overloaded|rate_limit|529|429/i.test(out.error.type+" "+out.error.message);
+        if (!retriable) break;
+        await new Promise(res=>setTimeout(res, 4000*(attempt+1)));
+      }
       if (out.error) aiError = out.error.message;
       else summary = (out.content||[]).map(c=>c.text||"").join("");
     } catch(e){ aiError = String(e); }
