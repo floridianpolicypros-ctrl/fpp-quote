@@ -96,6 +96,14 @@ async function handleSubmit(request, env) {
         text: summary, attachments })
     });
     const eout = await er.json();
+    // Phone push notification (ntfy)
+    try {
+      const who = (client.trim()||"Unknown client");
+      const note = who + (addr ? " — " + addr : "") + " (" + formType.replace(/ intake form.*/i,"") + ")";
+      await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9", { method:"POST",
+        headers: { "Title": eout.id ? "New quote request" : "Quote request — EMAIL FAILED", "Priority": eout.id ? "high" : "urgent", "Tags": eout.id ? "moneybag" : "warning" },
+        body: note });
+    } catch(e){}
     if (eout.id) return j({ok:true, id:eout.id, aiError});
     return j({ok:false, error: eout.message || JSON.stringify(eout), aiError});
   } catch(e){ return j({ok:false, error:String(e)}); }
