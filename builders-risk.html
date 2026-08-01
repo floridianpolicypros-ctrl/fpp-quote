@@ -69,14 +69,13 @@
         <h2><span class="num">&#9733;</span> Fast start &mdash; upload &amp; we read it</h2>
         <p class="sub">Drag &amp; drop or click any tile. Upload the contract, permit, or plans and we&rsquo;ll read them and fill the form. All optional.</p>
         <div class="uploads">
-          <label class="drop"><div class="ico">&#128220;</div><div class="t">Contract / building schedule</div><div class="d">Value, GC &amp; timeline &mdash; sets your term</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="contract"></label>
           <label class="drop"><div class="ico">&#127968;</div><div class="t">Inspection report</div><div class="d">4-point / full home &mdash; auto-fills systems</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="fourpoint"></label>
           <label class="drop"><div class="ico">&#127963;&#65039;</div><div class="t">PAPA / Property Appraiser</div><div class="d">Year built, sqft, value</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="papa"></label>
           <label class="drop"><div class="ico">&#128208;</div><div class="t">Plans / appraisal</div><div class="d">Sqft, construction type, value</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="mls"></label>
           <label class="drop"><div class="ico">&#128247;</div><div class="t">Site photos / current dec</div><div class="d">Reno? include the existing policy</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="dec" capture="environment"></label>
           <label class="drop"><div class="ico">&#128206;</div><div class="t">Other / misc document</div><div class="d">Anything else &mdash; we&rsquo;ll read it &amp; add it</div><div class="status" data-status></div><input type="file" accept="image/*,.pdf" data-doc="misc"></label>
         </div>
-        <div class="note" id="aiNote"><strong>Smart auto-fill is ON.</strong> Upload a contract, permit, or plans and we&rsquo;ll read them and fill the form &mdash; fields flash green as they fill.</div>
+        <div class="note" id="aiNote"><strong>Smart auto-fill is ON.</strong> Upload an inspection, PAPA record, or plans and we&rsquo;ll read them and fill the form &mdash; fields flash green as they fill.</div>
       </section>
 
       <section class="card">
@@ -173,7 +172,7 @@ function syncConditionals(){
   toggle(".claims-dep",$("#hasClaims").value==="Yes");
 }
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}
-const DOC_LABELS={contract:"Contract / building schedule",fourpoint:"Inspection report",papa:"PAPA / Property Appraiser",mls:"Plans / appraisal",dec:"Site photos / current dec",misc:"Other document"};
+const DOC_LABELS={fourpoint:"Inspection report",papa:"PAPA / Property Appraiser",mls:"Plans / appraisal",dec:"Site photos / current dec",misc:"Other document"};
 const uploaded={};
 $$('input[type=file][data-doc]').forEach(inp=>{inp.addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;const key=inp.dataset.doc;uploaded[key]={name:f.name,type:f.type||"application/octet-stream",b64:await fileToBase64(f)};const drop=inp.closest(".drop");const st=drop?drop.querySelector("[data-status]"):null;if(st)st.textContent="Reading\u2026";if(CONFIG.aiEndpoint){try{const b64=uploaded[key].b64;const res=await fetch(CONFIG.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({docType:key,mimeType:f.type,dataBase64:b64})});const data=await res.json();const n=applyExtracted(data.fields||{});if(st)st.textContent=n>0?("\u2713 Filled "+n+" field"+(n>1?"s":"")):"\u2713 Attached";if(n>0)toast("\u2728 Filled "+n+" field"+(n>1?"s":"")+" from your "+DOC_LABELS[key]);}catch(err){if(st)st.textContent="\u2713 Attached (couldn\u2019t auto-read)";}}else if(st){st.textContent="\u2713 Attached";}buildSummary();});});
 function setField(name,value){const el=form.elements[name];if(!el||value==null||value==="")return false;if(el.tagName==="SELECT"){let m=null;for(const o of el.options){if(o.value.toLowerCase()===String(value).toLowerCase()||o.text.toLowerCase()===String(value).toLowerCase()){m=o.value;break;}}if(m!=null){el.value=m;}else return false;}else{if(el.value)return false;el.value=value;}el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1000);return true;}
