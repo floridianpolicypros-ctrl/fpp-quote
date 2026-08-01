@@ -7,7 +7,7 @@ const routes = {
   "/property":"property.html","/investment":"investment.html",
   "/renters":"renters.html","/condo":"renters.html",
   "/auto":"auto.html","/commercial":"commercial-auto.html","/rec":"recreation.html",
-  "/flood":"flood.html","/umbrella":"umbrella.html"
+  "/flood":"flood.html","/umbrella":"umbrella.html","/builders":"builders-risk.html"
 };
 const PAGES = {};
 for (const [r,f] of Object.entries(routes)) PAGES[r] = Buffer.from(load(f),'utf8').toString('base64');
