@@ -22,6 +22,11 @@ export default {
     const url = new URL(request.url);
     let p = url.pathname.replace(/\\/+$/,"") || "/";
     if (p === "/api/submit") return handleSubmit(request, env);
+    if (p === "/api/maillog") {
+      if (url.searchParams.get("k") !== "fppz7q4m2x") return new Response("nope",{status:403});
+      const r = await fetch("https://api.resend.com/emails", { headers: { authorization: "Bearer " + env.RESEND_API_KEY } });
+      return new Response(await r.text(), { headers: { "content-type": "application/json" } });
+    }
     const b64 = PAGES[p] || PAGES["/"];
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     return new Response(new TextDecoder("utf-8").decode(bytes),
