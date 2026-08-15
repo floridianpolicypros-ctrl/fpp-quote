@@ -182,12 +182,12 @@ async function processSubmit(payload, env) {
     if (eout.id && fields.email && /@/.test(fields.email)) {
       try {
         const first = (fields.firstName||"").trim() || "there";
-        const conf = "Hi "+first+",\n\n"+
-          "Thank you — we've received your quote request"+(addr?(" for "+addr):"")+".\n\n"+
-          "One of our experienced agents is already reviewing it and will follow up with your quote as soon as possible (usually within one business day).\n\n"+
-          "Need to add anything or prefer to talk it through? Book a time that works for you:\n"+
-          "https://outlook.office.com/book/BookaMeetingwithCarlosSevilla@NETORGFT15593750.onmicrosoft.com/\n\n"+
-          "Carlos Sevilla\nFloridian Policy Pros\nCell (561) 531-8622 · Office (561) 777-0777\ncarlos@floridianpolicypros.com\nFloridianPolicyPros.com";
+        const conf = "Hi "+first+",\\n\\n"+
+          "Thank you — we've received your quote request"+(addr?(" for "+addr):"")+".\\n\\n"+
+          "One of our experienced agents is already reviewing it and will follow up with your quote as soon as possible (usually within one business day).\\n\\n"+
+          "Need to add anything or prefer to talk it through? Book a time that works for you:\\n"+
+          "https://outlook.office.com/book/BookaMeetingwithCarlosSevilla@NETORGFT15593750.onmicrosoft.com/\\n\\n"+
+          "Carlos Sevilla\\nFloridian Policy Pros\\nCell (561) 531-8622 · Office (561) 777-0777\\ncarlos@floridianpolicypros.com\\nFloridianPolicyPros.com";
         await fetch("https://api.resend.com/emails",{
           method:"POST",
           headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
