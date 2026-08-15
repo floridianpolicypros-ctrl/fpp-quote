@@ -45,7 +45,7 @@ function patchPapa(s){
   return s.replace('</body>', inj+'\n</body>');
 }
 function patchUX(s){
-  if(s.indexOf('/api/submit')<0 || s.indexOf('__fppConfirm')>=0) return s;
+  if(s.indexOf('/api/submit')<0 || s.indexOf('__fppConfirm=function')>=0) return s;
   var inj='<script>\n'+
   '(function(){\n'+
   ' [].slice.call(document.querySelectorAll("button")).forEach(function(b){var t=(b.textContent||"").trim();if(/copy summary/i.test(t)||t==="\\uD83D\\uDCCB Copy"||/^\\uD83D\\uDCCB Copy/.test(t)){b.remove();}});\n'+
