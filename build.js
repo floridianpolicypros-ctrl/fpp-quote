@@ -66,7 +66,12 @@ function patchUX(s){
   '<\/script>';
   return s.replace('</body>', inj+'\n</body>');
 }
-function load(f){ return patchPapa(patchUX(patchForm(fs.readFileSync(f,'utf8').split('__LOGO__').join(logo)))); }
+function patchVin(s){
+  var o='<div class="field"><label>VIN</label><input name="v1VIN" placeholder="17-digit VIN"></div>';
+  var n='<div class="field"><label>VIN <span class="req">*</span></label><input name="v1VIN" placeholder="17-digit VIN" required></div>';
+  return s.split(o).join(n);
+}
+function load(f){ return patchVin(patchPapa(patchUX(patchForm(fs.readFileSync(f,'utf8').split('__LOGO__').join(logo))))); }
 const routes = {
   "/":"hub.html","/home":"index.html","/realtor":"realtor.html","/lender":"lender.html",
   "/property":"property.html","/investment":"investment.html",
