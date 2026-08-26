@@ -91,6 +91,8 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     let p = url.pathname.replace(/\\/+$/,"") || "/";
+    let agent = "carlos";
+    if (p === "/s" || p.indexOf("/s/") === 0) { agent = "samantha"; p = p.slice(2) || "/"; }
     if (p === "/api/submit") return handleSubmit(request, env, ctx);
     if (p === "/api/maillog") {
       if (url.searchParams.get("k") !== "fppz7q4m2x") return new Response("nope",{status:403});
@@ -99,7 +101,9 @@ export default {
     }
     const b64 = PAGES[p] || PAGES["/"];
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    return new Response(new TextDecoder("utf-8").decode(bytes),
+    let html = new TextDecoder("utf-8").decode(bytes);
+    if (agent === "samantha") html = samanthaize(html);
+    return new Response(html,
       { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
   }
 };
@@ -115,6 +119,9 @@ async function handleSubmit(request, env, ctx) {
 async function processSubmit(payload, env) {
   try {
     const { formType="quote", subject="Quote Request", fields={}, files=[] } = payload;
+    const agent = payload.agent === "samantha" ? "samantha" : "carlos";
+    const TO = agent === "samantha" ? "samantha@floridianpolicypros.com" : RECIPIENT;
+    const CC = agent === "samantha" ? ["carlos@floridianpolicypros.com"] : undefined;
 
     // 1) Build the AI summary from fields + docs
     let summary = "";
@@ -174,7 +181,7 @@ async function processSubmit(payload, env) {
     const er = await fetch("https://api.resend.com/emails",{
       method:"POST",
       headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
-      body: JSON.stringify({ from: FROM, to: [RECIPIENT], subject: subject,
+      body: JSON.stringify({ from: FROM, to: [TO], cc: CC, subject: subject,
         text: summary, attachments })
     });
     const eout = await er.json();
@@ -185,9 +192,12 @@ async function processSubmit(payload, env) {
         const conf = "Hi "+first+",\\n\\n"+
           "Thank you — we've received your quote request"+(addr?(" for "+addr):"")+".\\n\\n"+
           "One of our experienced agents is already reviewing it and will follow up with your quote as soon as possible (usually within one business day).\\n\\n"+
-          "Need to add anything or prefer to talk it through? Book a time that works for you:\\n"+
-          "https://outlook.office.com/book/BookaMeetingwithCarlosSevilla@NETORGFT15593750.onmicrosoft.com/\\n\\n"+
-          "Carlos Sevilla\\nFloridian Policy Pros\\nCell (561) 531-8622 · Office (561) 777-0777\\ncarlos@floridianpolicypros.com\\nFloridianPolicyPros.com";
+          (agent === "samantha"
+            ? "Need to add anything or prefer to talk it through? Call or text Samantha at (772) 382-9029.\\n\\n"+
+              "Samantha Cruz · LIC# G231535\\nFloridian Policy Pros\\nCell (772) 382-9029 · Office (561) 777-0777\\nsamantha@floridianpolicypros.com\\nFloridianPolicyPros.com"
+            : "Need to add anything or prefer to talk it through? Book a time that works for you:\\n"+
+              "https://outlook.office.com/book/BookaMeetingwithCarlosSevilla@NETORGFT15593750.onmicrosoft.com/\\n\\n"+
+              "Carlos Sevilla\\nFloridian Policy Pros\\nCell (561) 531-8622 · Office (561) 777-0777\\ncarlos@floridianpolicypros.com\\nFloridianPolicyPros.com");
         await fetch("https://api.resend.com/emails",{
           method:"POST",
           headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
@@ -200,7 +210,7 @@ async function processSubmit(payload, env) {
     // Phone push notification (ntfy)
     try {
       const who = (client.trim()||"Unknown client");
-      const note = who + (addr ? " — " + addr : "") + " (" + formType.replace(/ intake form.*/i,"") + ")";
+      const note = (agent === "samantha" ? "[Samantha] " : "") + who + (addr ? " — " + addr : "") + " (" + formType.replace(/ intake form.*/i,"") + ")";
       await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9", { method:"POST",
         headers: { "Title": eout.id ? "New quote request" : "Quote request — EMAIL FAILED", "Priority": eout.id ? "high" : "urgent", "Tags": eout.id ? "moneybag" : "warning" },
         body: note });
@@ -210,6 +220,17 @@ async function processSubmit(payload, env) {
       headers:{"Title":"Quote processing FAILED","Priority":"urgent","Tags":"warning"},
       body:"processSubmit error: "+String(e).slice(0,180)}); } catch(_){}
   }
+}
+
+function samanthaize(h){
+  h = h.split("carlos@floridianpolicypros.com").join("samantha@floridianpolicypros.com");
+  h = h.split("Book a call with Carlos").join("Call Samantha (772) 382-9029");
+  h = h.split("https://outlook.office.com/book/BookaMeetingwithCarlosSevilla@NETORGFT15593750.onmicrosoft.com/").join("tel:+17723829029");
+  h = h.split('href="/').join('href="/s/');
+  h = h.split('href="/s/s/').join('href="/s/');
+  const tag = '<div style="text-align:center;padding:14px 10px 22px;color:#44536a;font-size:13px">Your agent: <b>Samantha Cruz</b> \u00b7 LIC# G231535 \u00b7 <a href="tel:+17723829029" style="color:#274b73">(772) 382-9029</a> \u00b7 <a href="mailto:samantha@floridianpolicypros.com" style="color:#274b73">samantha@floridianpolicypros.com</a></div>'+
+    '<scr'+'ipt>(function(){var of=window.fetch;window.fetch=function(u,o){try{if(typeof u==="string"&&u.indexOf("/api/submit")>=0&&o&&o.body){var b=JSON.parse(o.body);b.agent="samantha";o.body=JSON.stringify(b);}}catch(e){}return of.call(this,u,o);};})();</scr'+'ipt>';
+  return h.replace("</body>", tag+"</body>");
 }
 
 function wordDoc(text, client, addr, formType){
