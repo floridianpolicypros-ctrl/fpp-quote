@@ -2,9 +2,9 @@ const fs = require('fs');
 const logo = fs.readFileSync('logo.txt','utf8').trim();
 const prompt = fs.readFileSync('summary-prompt.txt','utf8');
 function patchForm(s){
-  var GUARD='if(window.__sending){toast("Already sending — hang tight…");return;}\n  window.__sending=true;\n  const _sb=(e&&e.submitter)||[...document.querySelectorAll("button")].find(b=>/send/i.test(b.textContent)&&/request|quote/i.test(b.textContent));\n  const _sbTxt=_sb?_sb.innerHTML:"";\n  if(_sb){_sb.disabled=true;_sb.style.opacity=".7";_sb.textContent="⏳ Sending…";}\n  toast("Sending your request…");';
-  var OK='if(_sb){_sb.textContent="✅ Sent!";} if(window.__fppConfirm){window.__fppConfirm();} toast("✅ Sent!");';
-  var FAIL='window.__sending=false; if(_sb){_sb.disabled=false;_sb.style.opacity="";_sb.innerHTML=_sbTxt;} ';
+  var GUARD='if(window.__sending){toast("Already sending — hang tight…");return;}\n  window.__sending=true;\n  const _sb=(e&&e.submitter)||[...document.querySelectorAll("button")].find(b=>/send/i.test(b.textContent)&&/request|quote/i.test(b.textContent));\n  const _sbTxt=_sb?_sb.innerHTML:"";\n  if(_sb){_sb.disabled=true;_sb.style.opacity=".7";_sb.textContent="⏳ Sending…";}\n  toast("Sending your request…");\n  setTimeout(function(){ if(window.__sending && window.__fppConfirm && !window.__fppDone){ window.__fppDone=1; window.__fppConfirm(); } },4000);';
+  var OK='if(_sb){_sb.textContent="✅ Sent!";} if(!window.__fppDone){window.__fppDone=1; if(window.__fppConfirm){window.__fppConfirm();}} toast("✅ Sent!");';
+  var FAIL='if(window.__fppDone){return;} window.__sending=false; if(_sb){_sb.disabled=false;_sb.style.opacity="";_sb.innerHTML=_sbTxt;} ';
   ['toast("Sending your request…");','toast("Sending your request\\u2026");'].forEach(function(t){ if(s.indexOf(t)>=0 && s.indexOf("window.__sending")<0) s=s.replace(t,GUARD); });
   ['toast("✅ Sent! Carlos has your request — docs and all.");','toast("\\u2705 Sent! Carlos has your request \\u2014 docs and all.");'].forEach(function(t){ if(s.indexOf(t)>=0 && s.indexOf("be in touch shortly")<0) s=s.replace(t,OK); });
   if(s.indexOf(".catch(()=>{ window.location.href")>=0 && s.indexOf("_sb.innerHTML=_sbTxt")<0) s=s.replace(".catch(()=>{ window.location.href",".catch(()=>{ "+FAIL+"window.location.href");
@@ -49,6 +49,8 @@ function patchUX(s){
   var inj='<script>\n'+
   '(function(){\n'+
   ' [].slice.call(document.querySelectorAll("button")).forEach(function(b){var t=(b.textContent||"").trim();if(/copy summary/i.test(t)||t==="\\uD83D\\uDCCB Copy"||/^\\uD83D\\uDCCB Copy/.test(t)){b.remove();}});\n'+
+  ' document.addEventListener("submit",function(){ setTimeout(function(){ if(window.__sending && !window.__fppDone && window.__fppConfirm){ window.__fppDone=1; window.__fppConfirm(); } },4000); },true);\n'+
+  ' var _of=window.fetch; window.fetch=function(u,o){ var p=_of.call(this,u,o); if(typeof u==="string"&&u.indexOf("/api/submit")>=0){ p.then(function(r){ if(r&&r.ok&&!window.__fppDone&&window.__fppConfirm){ window.__fppDone=1; window.__fppConfirm(); } }); } return p; };\n'+
   ' window.__fppConfirm=function(){\n'+
   '  var o=document.createElement("div");\n'+
   '  o.style.cssText="position:fixed;inset:0;background:rgba(244,247,251,.98);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px";\n'+
@@ -125,7 +127,7 @@ async function handleSubmit(request, env, ctx) {
       headers:{"Title":"Quote processing FAILED","Priority":"urgent","Tags":"warning"},
       body:"processCritical error: "+String(e).slice(0,180)}); } catch(_){}
   }
-  ctx.waitUntil(processAI(payload, env));
+  await processAI(payload, env);
   return j({ok:true, queued:true});
 }
 
