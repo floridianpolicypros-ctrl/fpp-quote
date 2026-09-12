@@ -2,7 +2,7 @@ const fs = require('fs');
 const logo = fs.readFileSync('logo.txt','utf8').trim();
 const prompt = fs.readFileSync('summary-prompt.txt','utf8');
 function patchForm(s){
-  var GUARD='if(window.__sending){toast("Already sending — hang tight…");return;}\n  window.__sending=true;\n  const _sb=(e&&e.submitter)||[...document.querySelectorAll("button")].find(b=>/send/i.test(b.textContent)&&/request|quote/i.test(b.textContent));\n  const _sbTxt=_sb?_sb.innerHTML:"";\n  if(_sb){_sb.disabled=true;_sb.style.opacity=".7";_sb.textContent="⏳ Sending…";}\n  toast("Sending your request…");\n  setTimeout(function(){ if(window.__sending && window.__fppConfirm && !window.__fppDone){ window.__fppDone=1; window.__fppConfirm(); } },4000);';
+  var GUARD='if(window.__sending){toast("Already sending — hang tight…");return;}\n  window.__sending=true;\n  const _sb=(e&&e.submitter)||[...document.querySelectorAll("button")].find(b=>/send/i.test(b.textContent)&&/request|quote/i.test(b.textContent));\n  const _sbTxt=_sb?_sb.innerHTML:"";\n  if(_sb){_sb.disabled=true;_sb.style.opacity=".7";_sb.textContent="⏳ Sending…";}\n  toast("Sending your request…");\n  setTimeout(function(){ if(window.__sending && !window.__fppDone && window.__fppShow){ window.__fppShow(false); } },1500);';
   var OK='if(_sb){_sb.textContent="✅ Sent!";} if(!window.__fppDone){window.__fppDone=1; if(window.__fppConfirm){window.__fppConfirm();}} toast("✅ Sent!");';
   var FAIL='if(window.__fppDone){return;} window.__sending=false; if(_sb){_sb.disabled=false;_sb.style.opacity="";_sb.innerHTML=_sbTxt;} ';
   ['toast("Sending your request…");','toast("Sending your request\\u2026");'].forEach(function(t){ if(s.indexOf(t)>=0 && s.indexOf("window.__sending")<0) s=s.replace(t,GUARD); });
@@ -45,29 +45,27 @@ function patchPapa(s){
   return s.replace('</body>', inj+'\n</body>');
 }
 function patchUX(s){
-  if(s.indexOf('/api/submit')<0 || s.indexOf('__fppConfirm=function')>=0) return s;
+  if(s.indexOf('/api/submit')<0 || s.indexOf('__fppShow')>=0) return s;
   var inj='<script>\n'+
   '(function(){\n'+
-  ' [].slice.call(document.querySelectorAll("button")).forEach(function(b){var t=(b.textContent||"").trim();if(/copy summary/i.test(t)||t==="\\uD83D\\uDCCB Copy"||/^\\uD83D\\uDCCB Copy/.test(t)){b.remove();}});\n'+
-  ' document.addEventListener("submit",function(){ setTimeout(function(){ if(window.__sending && !window.__fppDone && window.__fppConfirm){ window.__fppDone=1; window.__fppConfirm(); } },4000); },true);\n'+
-  ' var _of=window.fetch; window.fetch=function(u,o){ var p=_of.call(this,u,o); if(typeof u==="string"&&u.indexOf("/api/submit")>=0){ p.then(function(r){ if(r&&r.ok&&!window.__fppDone&&window.__fppConfirm){ window.__fppDone=1; window.__fppConfirm(); } }); } return p; };\n'+
-  ' window.__fppConfirm=function(){\n'+
-  '  var o=document.createElement("div");\n'+
-  '  o.style.cssText="position:fixed;inset:0;background:rgba(244,247,251,.98);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px";\n'+
-  '  o.innerHTML=\'<div style="max-width:480px;background:#fff;border:1px solid #dbe4ef;border-radius:18px;padding:34px 28px;text-align:center;box-shadow:0 10px 40px rgba(20,40,70,.15);font-family:inherit">\'+\n'+
-  '   \'<div style="font-size:52px;line-height:1">\\u2705</div>\'+\n'+
-  '   \'<h2 style="margin:14px 0 6px;color:#274b73;font-size:22px">Request received!</h2>\'+\n'+
-  '   \'<p style="color:#44536a;font-size:14.5px;line-height:1.55;margin:0 0 6px">We\\u2019ve got it \\u2014 your documents are being read right now. A confirmation email is on its way to you, and one of our experienced agents will follow up with your quote as soon as possible.</p>\'+\n'+
-  '   \'<p style="color:#8a97ab;font-size:12.5px;margin:0 0 18px">You can safely close this page.</p>\'+\n'+
-  '   \'<a href="https://outlook.office.com/book/BookaMeetingwithCarlosSevilla@NETORGFT15593750.onmicrosoft.com/" target="_blank" rel="noopener" style="display:inline-block;background:#274b73;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px">\\uD83D\\uDCC5 Prefer to talk? Book a call with Carlos</a>\'+\n'+
-  '  \'</div>\';\n'+
-  '  document.body.appendChild(o);\n'+
+  ' [].slice.call(document.querySelectorAll("button")).forEach(function(b){var t=(b.textContent||"").trim();if(/copy summary/i.test(t)||t==="\uD83D\uDCCB Copy"||/^\uD83D\uDCCB Copy/.test(t)){b.remove();}});\n'+
+  ' var CARD=\'<div style="max-width:480px;background:#fff;border:1px solid #dbe4ef;border-radius:18px;padding:34px 28px;text-align:center;box-shadow:0 10px 40px rgba(20,40,70,.15);font-family:inherit">\';\n'+
+  ' var WAIT=CARD+\'<div style="width:46px;height:46px;margin:0 auto;border:4px solid #dbe4ef;border-top-color:#274b73;border-radius:50%;animation:fppspin 1s linear infinite"></div>\'+\'<h2 style="margin:16px 0 6px;color:#274b73;font-size:21px">Request received \u2014 preparing your summary\u2026</h2>\'+\'<p style="color:#44536a;font-size:14.5px;line-height:1.55;margin:0 0 6px">Our AI is reading your information and generating the quote summary for your agent right now.</p>\'+\'<p style="color:#8a97ab;font-size:12.5px;margin:0">This usually takes about a minute \u2014 please keep this page open.</p>\'+\'</div>\';\n'+
+  ' var DONE=CARD+\'<div style="font-size:52px;line-height:1">\u2705</div>\'+\'<h2 style="margin:14px 0 6px;color:#274b73;font-size:22px">All set \u2014 request received!</h2>\'+\'<p style="color:#44536a;font-size:14.5px;line-height:1.55;margin:0 0 6px">Your quote request and documents are in. One of our experienced agents will follow up with your quote as soon as possible.</p>\'+\'<p style="color:#8a97ab;font-size:12.5px;margin:0 0 18px">You can safely close this page.</p>\'+\'<a href="https://outlook.office.com/book/BookaMeetingwithCarlosSevilla@NETORGFT15593750.onmicrosoft.com/" target="_blank" rel="noopener" style="display:inline-block;background:#274b73;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px">\uD83D\uDCC5 Prefer to talk? Book a call with Carlos</a>\'+\'</div>\';\n'+
+  ' window.__fppShow=function(done){\n'+
+  '  var o=document.getElementById("fppOverlay");\n'+
+  '  if(!o){ o=document.createElement("div"); o.id="fppOverlay"; o.style.cssText="position:fixed;inset:0;background:rgba(244,247,251,.98);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px"; var st=document.createElement("style"); st.textContent="@keyframes fppspin{to{transform:rotate(360deg)}}"; document.head.appendChild(st); document.body.appendChild(o); }\n'+
+  '  o.innerHTML = done ? DONE : WAIT;\n'+
   '  window.scrollTo(0,0);\n'+
   ' };\n'+
+  ' window.__fppConfirm=function(){ window.__fppDone=1; window.__fppShow(true); };\n'+
+  ' document.addEventListener("submit",function(){ setTimeout(function(){ if(window.__sending && !window.__fppDone){ window.__fppShow(false); } },1500); },true);\n'+
+  ' var _of=window.fetch; window.fetch=function(u,o){ var p=_of.call(this,u,o); if(typeof u==="string"&&u.indexOf("/api/submit")>=0){ p.then(function(r){ if(r&&r.ok&&!window.__fppDone){ window.__fppConfirm(); } }); } return p; };\n'+
   '})();\n'+
   '<\/script>';
   return s.replace('</body>', inj+'\n</body>');
 }
+
 function patchVin(s){
   var o='<div class="field"><label>VIN</label><input name="v1VIN" placeholder="17-digit VIN"></div>';
   var n='<div class="field"><label>VIN <span class="req">*</span></label><input name="v1VIN" placeholder="17-digit VIN" required></div>';
