@@ -95,6 +95,13 @@ export default {
     let agent = "carlos";
     if (p === "/s" || p.indexOf("/s/") === 0) { agent = "samantha"; p = p.slice(2) || "/"; }
     if (p === "/api/submit") return handleSubmit(request, env, ctx);
+    if (p === "/api/debug") {
+      if (url.searchParams.get("k") !== "fppz7q4m2x") return new Response("nope",{status:403});
+      const dbg = { hasResendKey: !!env.RESEND_API_KEY, hasAnthropicKey: !!env.ANTHROPIC_API_KEY };
+      try { const r = await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",headers:{"Title":"debug ping"},body:"debug from worker"}); dbg.ntfy = r.status+" "+(await r.text()).slice(0,120); } catch(e){ dbg.ntfyErr = String(e); }
+      try { const r = await fetch("https://api.resend.com/emails",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},body: JSON.stringify({ from: FROM, to: [RECIPIENT], subject: "DEBUG — pipeline check", text: "debug email from worker" })}); dbg.resend = r.status+" "+(await r.text()).slice(0,200); } catch(e){ dbg.resendErr = String(e); }
+      return j(dbg);
+    }
     if (p === "/api/maillog") {
       if (url.searchParams.get("k") !== "fppz7q4m2x") return new Response("nope",{status:403});
       const r = await fetch("https://api.resend.com/emails", { headers: { authorization: "Bearer " + env.RESEND_API_KEY } });
