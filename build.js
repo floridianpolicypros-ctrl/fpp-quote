@@ -124,54 +124,25 @@ async function processSubmit(payload, env) {
     const TO = agent === "samantha" ? "samantha@floridianpolicypros.com" : RECIPIENT;
     const CC = agent === "samantha" ? ["carlos@floridianpolicypros.com"] : undefined;
 
-    // 1) Build the AI summary from fields + docs
-    let summary = "";
-    let aiError = null;
-    try {
-      const content = [];
-      let docBytes = 0;
-      for (const f of files.slice(0,5)) {
-        const size = (f.dataBase64||"").length * 0.75;
-        if (docBytes + size > 24_000_000) break; // stay under API limits
-        docBytes += size;
-        if ((f.type||"").includes("pdf"))
-          content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:f.dataBase64}});
-        else if ((f.type||"").startsWith("image/"))
-          content.push({type:"image",source:{type:"base64",media_type:f.type,data:f.dataBase64}});
-      }
-      content.push({type:"text",text:
-        "FORM TYPE: "+formType+"\\n\\nFORM DATA (submitted by client):\\n"+
-        Object.entries(fields).filter(([k,v])=>v).map(([k,v])=>k+": "+v).join("\\n")+
-        "\\n\\nATTACHED DOCUMENTS: "+(files.map(f=>f.name).join(", ")||"none")+
-        "\\n\\nProduce the full Quote Summary now."});
-      let out = null;
-      for (let attempt=0; attempt<3; attempt++) {
-        const r = await fetch("https://api.anthropic.com/v1/messages",{
-          method:"POST",
-          headers:{"content-type":"application/json","x-api-key":env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
-          body: JSON.stringify({model:"claude-sonnet-5",max_tokens:8000,system:SUMMARY_PROMPT,
-            messages:[{role:"user",content}]})
-        });
-        out = await r.json();
-        const retriable = out.error && /overloaded|rate_limit|529|429/i.test(out.error.type+" "+out.error.message);
-        if (!retriable) break;
-        await new Promise(res=>setTimeout(res, 4000*(attempt+1)));
-      }
-      if (out.error) aiError = out.error.message;
-      else summary = (out.content||[]).map(c=>c.text||"").join("");
-    } catch(e){ aiError = String(e); }
-    if (!summary) summary = "AI summary unavailable ("+(aiError||"unknown error")+").\\n\\nRAW FORM DATA:\\n"+
-      Object.entries(fields).filter(([k,v])=>v).map(([k,v])=>k+": "+v).join("\\n");
-
-    // 2) Word file (.doc = Word-HTML)
     const client = (fields.firstName||"")+" "+(fields.lastName||fields.bizName||"");
     const addr = fields.propAddress || fields.currentAddress || "";
-    const docName = (client.trim()||"Client")+" - "+(addr||formType)+" - Quote Summary.doc";
-    const docHtml = wordDoc(summary, client.trim(), addr, formType);
+    const who = (client.trim()||"Unknown client");
 
-    // 3) Email via Resend with attachments
-    const attachments = [{ filename: docName.replace(/[\\\\/:*?"<>|]/g,"-"),
-                           content: btoa(unescape(encodeURIComponent(docHtml))) }];
+    // 1) Phone ping first (guaranteed)
+    try {
+      await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9", { method:"POST",
+        headers: { "Title": "New quote request", "Priority": "high", "Tags": "moneybag" },
+        body: (agent === "samantha" ? "[Samantha] " : "") + who + (addr ? " — " + addr : "") + " (" + formType.replace(/ intake form.*/i,"") + ")" });
+    } catch(e){}
+
+    // 2) Guaranteed email: raw intake + every uploaded document
+    const rawText = "NEW QUOTE REQUEST — "+formType+"\\n\\n"+
+      Object.entries(fields).filter(([k,v])=>v).map(([k,v])=>k+": "+v).join("\\n")+
+      "\\n\\nATTACHED DOCUMENTS: "+(files.map(f=>f.name).join(", ")||"none")+
+      "\\n\\n(The AI Quote Summary follows in a separate email once processing completes.)";
+    const rawDocName = (client.trim()||"Client")+" - "+(addr||formType)+" - Intake.doc";
+    const attachments = [{ filename: rawDocName.replace(/[\\\\/:*?"<>|]/g,"-"),
+                           content: btoa(unescape(encodeURIComponent(wordDoc(rawText, client.trim(), addr, formType)))) }];
     let attBytes = 0;
     for (const f of files) {
       const size=(f.dataBase64||"").length*0.75;
@@ -179,15 +150,24 @@ async function processSubmit(payload, env) {
       attBytes += size;
       attachments.push({ filename: f.name||"document", content: f.dataBase64 });
     }
-    const er = await fetch("https://api.resend.com/emails",{
-      method:"POST",
-      headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
-      body: JSON.stringify({ from: FROM, to: [TO], cc: CC, subject: subject,
-        text: summary, attachments })
-    });
-    const eout = await er.json();
-    // Auto-reply confirmation to the client
-    if (eout.id && fields.email && /@/.test(fields.email)) {
+    let eout = {};
+    try {
+      const er = await fetch("https://api.resend.com/emails",{
+        method:"POST",
+        headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
+        body: JSON.stringify({ from: FROM, to: [TO], cc: CC, subject: subject,
+          text: rawText, attachments })
+      });
+      eout = await er.json();
+    } catch(e){}
+    if (!eout.id) {
+      try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",
+        headers:{"Title":"Quote request — EMAIL FAILED","Priority":"urgent","Tags":"warning"},
+        body: who + " — intake email failed"}); } catch(e){}
+    }
+
+    // 3) Auto-reply confirmation to the client (guaranteed)
+    if (fields.email && /@/.test(fields.email)) {
       try {
         const first = (fields.firstName||"").trim() || "there";
         const conf = "Hi "+first+",\\n\\n"+
@@ -208,14 +188,58 @@ async function processSubmit(payload, env) {
         });
       } catch(e){}
     }
-    // Phone push notification (ntfy)
+    // 4) Best-effort AI summary (follow-up email) from fields + docs
+    let summary = "";
+    let aiError = null;
     try {
-      const who = (client.trim()||"Unknown client");
-      const note = (agent === "samantha" ? "[Samantha] " : "") + who + (addr ? " — " + addr : "") + " (" + formType.replace(/ intake form.*/i,"") + ")";
-      await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9", { method:"POST",
-        headers: { "Title": eout.id ? "New quote request" : "Quote request — EMAIL FAILED", "Priority": eout.id ? "high" : "urgent", "Tags": eout.id ? "moneybag" : "warning" },
-        body: note });
-    } catch(e){}
+      const content = [];
+      let docBytes = 0;
+      for (const f of files.slice(0,5)) {
+        const size = (f.dataBase64||"").length * 0.75;
+        if (docBytes + size > 24_000_000) break; // stay under API limits
+        docBytes += size;
+        if ((f.type||"").includes("pdf"))
+          content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:f.dataBase64}});
+        else if ((f.type||"").startsWith("image/"))
+          content.push({type:"image",source:{type:"base64",media_type:f.type,data:f.dataBase64}});
+      }
+      content.push({type:"text",text:
+        "FORM TYPE: "+formType+"\\n\\nFORM DATA (submitted by client):\\n"+
+        Object.entries(fields).filter(([k,v])=>v).map(([k,v])=>k+": "+v).join("\\n")+
+        "\\n\\nATTACHED DOCUMENTS: "+(files.map(f=>f.name).join(", ")||"none")+
+        "\\n\\nProduce the full Quote Summary now."});
+      let out = null;
+      for (let attempt=0; attempt<2; attempt++) {
+        const r = await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"content-type":"application/json","x-api-key":env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
+          body: JSON.stringify({model:"claude-sonnet-5",max_tokens:8000,system:SUMMARY_PROMPT,
+            messages:[{role:"user",content}]})
+        });
+        out = await r.json();
+        const retriable = out.error && /overloaded|rate_limit|529|429/i.test(out.error.type+" "+out.error.message);
+        if (!retriable) break;
+        await new Promise(res=>setTimeout(res, 4000*(attempt+1)));
+      }
+      if (out.error) aiError = out.error.message;
+      else summary = (out.content||[]).map(c=>c.text||"").join("");
+    } catch(e){ aiError = String(e); }
+
+    // 5) Send the AI summary as a follow-up email
+    if (summary) {
+      const docName = (client.trim()||"Client")+" - "+(addr||formType)+" - Quote Summary.doc";
+      try {
+        await fetch("https://api.resend.com/emails",{
+          method:"POST",
+          headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
+          body: JSON.stringify({ from: FROM, to: [TO], cc: CC,
+            subject: "AI Quote Summary — "+who+(addr?" — "+addr:""),
+            text: summary,
+            attachments: [{ filename: docName.replace(/[\\\\/:*?"<>|]/g,"-"),
+                            content: btoa(unescape(encodeURIComponent(wordDoc(summary, client.trim(), addr, formType)))) }] })
+        });
+      } catch(e){}
+    }
   } catch(e){
     try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",
       headers:{"Title":"Quote processing FAILED","Priority":"urgent","Tags":"warning"},
