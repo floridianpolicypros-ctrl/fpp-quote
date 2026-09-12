@@ -113,12 +113,16 @@ async function handleSubmit(request, env, ctx) {
   if (request.method !== "POST") return j({error:"POST only"},405);
   let payload = null;
   try { payload = await request.json(); } catch(e){ return j({ok:false, error:"bad request"},400); }
-  ctx.waitUntil(processSubmit(payload, env));
+  try { await processCritical(payload, env); } catch(e){
+    try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",
+      headers:{"Title":"Quote processing FAILED","Priority":"urgent","Tags":"warning"},
+      body:"processCritical error: "+String(e).slice(0,180)}); } catch(_){}
+  }
+  ctx.waitUntil(processAI(payload, env));
   return j({ok:true, queued:true});
 }
 
-async function processSubmit(payload, env) {
-  try {
+async function processCritical(payload, env) {
     const { formType="quote", subject="Quote Request", fields={}, files=[] } = payload;
     const agent = payload.agent === "samantha" ? "samantha" : "carlos";
     const TO = agent === "samantha" ? "samantha@floridianpolicypros.com" : RECIPIENT;
@@ -188,6 +192,19 @@ async function processSubmit(payload, env) {
         });
       } catch(e){}
     }
+}
+
+async function processAI(payload, env) {
+  try {
+    const { formType="quote", subject="Quote Request", fields={}, files=[] } = payload;
+    const agent = payload.agent === "samantha" ? "samantha" : "carlos";
+    const TO = agent === "samantha" ? "samantha@floridianpolicypros.com" : RECIPIENT;
+    const CC = agent === "samantha" ? ["carlos@floridianpolicypros.com"] : undefined;
+
+    const client = (fields.firstName||"")+" "+(fields.lastName||fields.bizName||"");
+    const addr = fields.propAddress || fields.currentAddress || "";
+    const who = (client.trim()||"Unknown client");
+
     // 4) Best-effort AI summary (follow-up email) from fields + docs
     let summary = "";
     let aiError = null;
@@ -242,8 +259,8 @@ async function processSubmit(payload, env) {
     }
   } catch(e){
     try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",
-      headers:{"Title":"Quote processing FAILED","Priority":"urgent","Tags":"warning"},
-      body:"processSubmit error: "+String(e).slice(0,180)}); } catch(_){}
+      headers:{"Title":"AI summary FAILED","Priority":"high","Tags":"warning"},
+      body:"processAI error: "+String(e).slice(0,180)}); } catch(_){}
   }
 }
 
