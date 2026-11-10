@@ -72,7 +72,24 @@ function patchVin(s){
   return s.split(o).join(n);
 }
 function patchUpload(s){ return s.split(' capture="environment"').join(''); }
-function load(f){ return patchUpload(patchVin(patchPapa(patchUX(patchForm(fs.readFileSync(f,'utf8').split('__LOGO__').join(logo)))))); }
+function patchUploadFix(s){
+  if(s.indexOf('function fileToBase64(')<0) return s;
+  var OLD_F2B='function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});}';
+  var NEW_F2B=OLD_F2B+'\n'+
+    'function __fppCompressImage(file,maxDim,quality){return new Promise(function(resolve,reject){var url=URL.createObjectURL(file);var img=new Image();img.onload=function(){try{var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;if(!w||!h){URL.revokeObjectURL(url);return reject(new Error("no dims"));}var scale=Math.min(1,maxDim/Math.max(w,h));var cw=Math.max(1,Math.round(w*scale)),ch=Math.max(1,Math.round(h*scale));var c=document.createElement("canvas");c.width=cw;c.height=ch;var ctx=c.getContext("2d");ctx.drawImage(img,0,0,cw,ch);var durl=c.toDataURL("image/jpeg",quality);URL.revokeObjectURL(url);if(!durl||durl.indexOf("data:image/jpeg")!==0)return reject(new Error("encode failed"));resolve(durl.split(",")[1]);}catch(e){try{URL.revokeObjectURL(url);}catch(_){}reject(e);}};img.onerror=function(){try{URL.revokeObjectURL(url);}catch(_){}reject(new Error("decode failed"));};img.src=url;});}\n'+
+    'async function prepUpload(f){var type=f.type||"application/octet-stream",name=f.name||"document";var isImg=/^image\\//i.test(type)||/\\.(jpe?g|png|heic|heif|webp|gif|bmp|tiff?)$/i.test(name);if(!isImg){return {name:name,type:type,b64:await fileToBase64(f)};}try{var b64=await __fppCompressImage(f,1600,0.82);var outName=name.replace(/\\.(heic|heif|png|webp|gif|bmp|tiff?|jpe?g)$/i,"")+".jpg";return {name:outName,type:"image/jpeg",b64:b64};}catch(e){return {name:name,type:type,b64:await fileToBase64(f)};}}';
+  s=s.split(OLD_F2B).join(NEW_F2B);
+  s=s.split('uploaded[key]={name:f.name,type:f.type||"application/octet-stream",b64:await fileToBase64(f)}').join('uploaded[key]=await prepUpload(f)');
+  s=s.split('mimeType:f.type,dataBase64:b64').join('mimeType:(uploaded[key]&&uploaded[key].type||f.type),dataBase64:b64');
+  s=s.split('mimeType:f.type||"application/octet-stream",dataBase64').join('mimeType:(uploaded[key]&&uploaded[key].type||f.type||"application/octet-stream"),dataBase64');
+  s=s.split('Attach your uploaded photos to that email before sending.').join('Your uploaded files are sent to us automatically, with nothing for you to attach.');
+  s=s.split('(Client: please attach these files to this email.)').join('(These files are included automatically.)');
+  s=s.split('(Reminder: attach your uploaded photos/PDFs to this email.)').join('(Your uploaded files are included automatically.)');
+  s=s.split('Opening your email instead \\u2014 attach files and hit send.').join("Couldn't reach our server - opening your email as a backup; just tap send and we'll follow up for your documents.");
+  s=s.split('Opening your email instead — attach files and hit send.').join("Couldn't reach our server - opening your email as a backup; just tap send and we'll follow up for your documents.");
+  return s;
+}
+function load(f){ return patchUploadFix(patchUpload(patchVin(patchPapa(patchUX(patchForm(fs.readFileSync(f,'utf8').split('__LOGO__').join(logo))))))); }
 const routes = {
   "/":"hub.html","/home":"index.html","/realtor":"realtor.html","/lender":"lender.html",
   "/property":"property.html","/investment":"investment.html",
