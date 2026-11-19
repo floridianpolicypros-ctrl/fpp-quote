@@ -115,7 +115,7 @@ export default {
     if (p === "/api/debug") {
       if (url.searchParams.get("k") !== "fppz7q4m2x") return new Response("nope",{status:403});
       const dbg = { hasResendKey: !!env.RESEND_API_KEY, hasAnthropicKey: !!env.ANTHROPIC_API_KEY };
-      try { const r = await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",headers:{"Title":"debug ping"},body:"debug from worker"}); dbg.ntfy = r.status+" "+(await r.text()).slice(0,120); } catch(e){ dbg.ntfyErr = String(e); }
+      try { const r = await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",signal:AbortSignal.timeout(3000),headers:{"Title":"debug ping"},body:"debug from worker"}); dbg.ntfy = r.status+" "+(await r.text()).slice(0,120); } catch(e){ dbg.ntfyErr = String(e); }
       try { const r = await fetch("https://api.resend.com/emails",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},body: JSON.stringify({ from: FROM, to: [RECIPIENT], subject: "DEBUG — pipeline check", text: "debug email from worker" })}); dbg.resend = r.status+" "+(await r.text()).slice(0,200); } catch(e){ dbg.resendErr = String(e); }
       return j(dbg);
     }
@@ -138,7 +138,7 @@ async function handleSubmit(request, env, ctx) {
   let payload = null;
   try { payload = await request.json(); } catch(e){ return j({ok:false, error:"bad request"},400); }
   try { await processCritical(payload, env); } catch(e){
-    try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",
+    try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",signal:AbortSignal.timeout(3000),
       headers:{"Title":"Quote processing FAILED","Priority":"urgent","Tags":"warning"},
       body:"processCritical error: "+String(e).slice(0,180)}); } catch(_){}
   }
@@ -158,7 +158,7 @@ async function processCritical(payload, env) {
 
     // 1) Phone ping first (guaranteed)
     try {
-      await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9", { method:"POST",
+      await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9", { method:"POST", signal: AbortSignal.timeout(3000),
         headers: { "Title": "New quote request", "Priority": "high", "Tags": "moneybag" },
         body: (agent === "samantha" ? "[Samantha] " : "") + who + (addr ? " — " + addr : "") + " (" + formType.replace(/ intake form.*/i,"") + ")" });
     } catch(e){}
@@ -189,7 +189,7 @@ async function processCritical(payload, env) {
       eout = await er.json();
     } catch(e){}
     if (!eout.id) {
-      try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",
+      try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",signal:AbortSignal.timeout(3000),
         headers:{"Title":"Quote request — EMAIL FAILED","Priority":"urgent","Tags":"warning"},
         body: who + " — intake email failed"}); } catch(e){}
     }
@@ -282,7 +282,7 @@ async function processAI(payload, env) {
       } catch(e){}
     }
   } catch(e){
-    try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",
+    try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",signal:AbortSignal.timeout(3000),
       headers:{"Title":"AI summary FAILED","Priority":"high","Tags":"warning"},
       body:"processAI error: "+String(e).slice(0,180)}); } catch(_){}
   }
