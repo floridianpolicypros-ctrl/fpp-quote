@@ -188,6 +188,7 @@ async function processCritical(payload, env) {
       });
       eout = await er.json();
     } catch(e){}
+    try { await fetch("https://api.resend.com/emails",{ method:"POST", headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY}, body: JSON.stringify({ from: FROM, to: ["fppquotes.9uzusn@zapiermail.com"], subject: subject, text: "New quote intake received. Full details in your email." }) }); } catch(e){}
     if (!eout.id) {
       try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",signal:AbortSignal.timeout(3000),
         headers:{"Title":"Quote request — EMAIL FAILED","Priority":"urgent","Tags":"warning"},
