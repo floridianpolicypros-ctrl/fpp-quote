@@ -147,6 +147,7 @@ async function handlePartner(request, env) {
     "Agreed checkbox: YES\\n\\nPartner: "+f.name+"\\nCompany: "+(f.company||"")+"\\nEmail: "+f.email+"\\nPhone: "+(f.phone||"")+"\\n\\n----- RELEASE TEXT AS SHOWN -----\\n\\n"+(c.text||"");
   const body = "NEW PARTNER MEDIA UPLOAD\\n\\n"+
     "Name: "+f.name+"\\nCompany: "+(f.company||"")+"\\nRole: "+(f.role||"")+"\\nLicense/NMLS: "+(f.license||"")+"\\nEmail: "+f.email+"\\nPhone: "+(f.phone||"")+"\\n\\n"+
+    "VIDEO HIGHLIGHTS\\nTagline: "+(f.tagline||"(none)")+"\\nSpecialties: "+(f.specialties||"(none)")+"\\nSocial handles to tag: "+(f.social||"(none)")+"\\nPhone/website to show: "+(f.showContact||"(none)")+"\\nOther highlights: "+(f.highlights||"(none)")+"\\n\\n"+
     "Marketing release: SIGNED by "+c.signature+" on "+(c.date||"")+" (signed copy attached).\\n\\n"+
     "FILES ATTACHED:\\n"+files.map(x=>"- "+(x.kind||"File")+": "+x.name).join("\\n");
   const safe = s => String(s||"").replace(/[\\\\/:*?"<>|]/g,"-");

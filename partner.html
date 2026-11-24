@@ -49,6 +49,11 @@
   .thumb button{position:absolute;top:4px;right:4px;min-height:28px;width:28px;padding:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px}
   .ok{color:var(--good);font-weight:600;font-size:14px;margin-top:8px}
   .err{color:var(--danger);font-weight:600;font-size:14px;margin-top:8px}
+  textarea{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--ink);min-height:110px;resize:vertical}
+  .hint{font-size:13px;color:var(--muted);margin-top:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .chips label{display:flex;align-items:center;gap:6px;font-weight:500;font-size:14px;border:1px solid #cbd5e1;border-radius:999px;padding:8px 12px;margin:0;cursor:pointer;background:#fff}
+  .chips input{width:18px;height:18px}
   .legal{font-size:13.5px;color:#344054;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;max-height:260px;overflow:auto}
   .legal p{margin:0 0 8px}
   .check{display:flex;gap:10px;align-items:flex-start;margin:12px 0;font-weight:500;font-size:14.5px}
@@ -64,7 +69,7 @@
 <header>
   <img src="__LOGO__" alt="Floridian Policy Pros">
   <h1>Partner Media Upload</h1>
-  <p>Thanks for partnering with Floridian Policy Pros. Record a short voice sample and upload your headshot or logo for our co-branded marketing. It takes about 3 minutes.</p>
+  <p>Thanks for partnering with Floridian Policy Pros. Record a short voice sample and upload your headshot or logo for our co-branded marketing. It takes about 5 minutes.</p>
 </header>
 <main>
 <form id="f" novalidate>
@@ -85,6 +90,34 @@
 
   <section class="card">
     <span class="step">Step 2</span>
+    <h2>What should your video highlight?</h2>
+    <p class="sub">Your tagline and anything you want featured on screen or in the voiceover.</p>
+    <label for="tagline">Your tagline or slogan</label>
+    <input type="text" id="tagline" name="tagline" maxlength="120" placeholder="Example: Helping Florida families get home, one loan at a time">
+    <div class="hint">Shown on screen in your video. Up to 120 characters.</div>
+    <label style="margin-top:14px">Your specialties (check any that apply)</label>
+    <div class="chips" id="chips">
+      <label><input type="checkbox" value="First-time buyers">First-time buyers</label>
+      <label><input type="checkbox" value="Veterans / VA loans">Veterans / VA loans</label>
+      <label><input type="checkbox" value="First responders">First responders</label>
+      <label><input type="checkbox" value="FHA loans">FHA loans</label>
+      <label><input type="checkbox" value="Investors / DSCR">Investors / DSCR</label>
+      <label><input type="checkbox" value="Hard money / fix and flip">Hard money / fix and flip</label>
+      <label><input type="checkbox" value="Refinancing">Refinancing</label>
+      <label><input type="checkbox" value="Luxury / jumbo">Luxury / jumbo</label>
+      <label><input type="checkbox" value="Self-employed borrowers">Self-employed borrowers</label>
+      <label><input type="checkbox" value="Bilingual / Spanish">Bilingual / Spanish</label>
+    </div>
+    <label for="highlights" style="margin-top:14px">Anything else to highlight</label>
+    <textarea id="highlights" name="highlights" maxlength="1000" placeholder="Awards, years in business, areas you serve, a cause you support, a special program or rate, how you'd like your name and title shown, colors to use, or anything to avoid."></textarea>
+    <div class="grid" style="margin-top:12px">
+      <div><label for="social">Social handles to tag</label><input type="text" id="social" name="social" placeholder="@yourhandle on Instagram, Facebook, LinkedIn"></div>
+      <div><label for="cta">Phone or website to show (optional)</label><input type="text" id="cta" name="cta"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <span class="step">Step 3</span>
     <h2>Record your voice <span class="req">*</span></h2>
     <p class="sub">Find a quiet room, hold your phone about 6 inches away, and read the script below in your normal speaking voice. Aim for 45 seconds or more.</p>
     <div class="script"><b>Read this aloud:</b>
@@ -105,7 +138,7 @@
   </section>
 
   <section class="card">
-    <span class="step">Step 3</span>
+    <span class="step">Step 4</span>
     <h2>Headshot and logo</h2>
     <p class="sub">Upload a clear headshot and your company logo. Any picture you'd like us to use is welcome. Up to 6 files.</p>
     <label class="drop" id="imgDrop">Tap to choose photos, or drag them here<small>JPG, PNG, HEIC, SVG, or PDF logo files</small>
@@ -115,7 +148,7 @@
   </section>
 
   <section class="card">
-    <span class="step">Step 4</span>
+    <span class="step">Step 5</span>
     <h2>Marketing release <span class="req">*</span></h2>
     <div class="legal" id="legal">
       <p><b>Partner Marketing Consent and Media Release</b></p>
@@ -248,7 +281,7 @@ $("f").addEventListener("submit",async e=>{
   const need=[["name","your full name"],["company","your company"],["email","your email"]];
   for(const [id,l] of need){if(!$(id).value.trim()){err.textContent="Please enter "+l+".";$(id).focus();return;}}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($("email").value.trim())){err.textContent="Please check your email address.";$("email").focus();return;}
-  if(!voice){err.textContent="Please record your voice or upload a voice memo (Step 2).";$("recBtn").scrollIntoView({behavior:"smooth",block:"center"});return;}
+  if(!voice){err.textContent="Please record your voice or upload a voice memo (Step 3).";$("recBtn").scrollIntoView({behavior:"smooth",block:"center"});return;}
   if(!$("agree").checked){err.textContent="Please check the box to agree to the marketing release.";$("agree").focus();return;}
   if(!$("sig").value.trim()){err.textContent="Please type your full name as your signature.";$("sig").focus();return;}
   const total=voice.blob.size+imgs.reduce((a,b)=>a+b.blob.size,0);
@@ -257,7 +290,7 @@ $("f").addEventListener("submit",async e=>{
   try{
     const files=[{name:voice.name,type:voice.type,kind:"Voice sample",dataBase64:await b64(voice.blob)}];
     for(const it of imgs)files.push({name:it.name,type:it.type,kind:it.kind,dataBase64:await b64(it.blob)});
-    const fields={name:$("name").value.trim(),company:$("company").value.trim(),email:$("email").value.trim(),phone:$("phone").value.trim(),role:$("role").value,license:$("nmls").value.trim()};
+    const fields={name:$("name").value.trim(),company:$("company").value.trim(),email:$("email").value.trim(),phone:$("phone").value.trim(),role:$("role").value,license:$("nmls").value.trim(),tagline:$("tagline").value.trim(),specialties:[...document.querySelectorAll("#chips input:checked")].map(x=>x.value).join(", "),highlights:$("highlights").value.trim(),social:$("social").value.trim(),showContact:$("cta").value.trim()};
     const consent={agreed:true,signature:$("sig").value.trim(),date:$("dt").value,signedAtISO:new Date().toISOString(),text:$("legal").innerText};
     const r=await fetch("/api/partner",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({fields,consent,files})});
     const out=await r.json().catch(()=>({}));
