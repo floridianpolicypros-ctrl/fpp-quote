@@ -6,4 +6,4 @@ into the Cloudflare Worker (`dist/worker.js`), and Cloudflare auto-deploys on pu
 **To change a form:** edit its HTML file, commit, done — it publishes in ~1 minute.
 
 Routes: `/` hub · `/property` picker · `/home` HO3 · `/condo` HO6 · `/investment` DP3 ·
-`/renters` HO4 · `/auto` · `/commercial` · `/rec` · `/flood` · `/umbrella` · `/realtor` · `/lender`
+`/renters` HO4 · `/auto` · `/commercial` · `/rec` · `/flood` · `/umbrella` · `/realtor` · `/lender` · `/partner` (partner voice/photo upload + media release)

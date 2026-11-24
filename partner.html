@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Partner Media Upload | Floridian Policy Pros</title>
+<style>
+  :root{--brand:#1462a6;--bright:#18a8d8;--accent:#f2a81c;--bg:#f4f7fb;--card:#fff;--line:#e2e8f0;--muted:#667085;--ink:#101828;--good:#16a34a;--danger:#dc2626;--soft:#eef4fb}
+  *{box-sizing:border-box;min-width:0}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+  header{background:var(--brand);color:#fff;padding:22px 16px 26px;text-align:center}
+  header img{height:64px;background:#fff;border-radius:12px;padding:6px 10px}
+  header h1{margin:12px 0 4px;font-size:clamp(24px,5vw,32px);line-height:1.15}
+  header p{margin:0 auto;max-width:560px;opacity:.92;font-size:15px}
+  main{max-width:680px;margin:-12px auto 40px;padding:0 14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(16,24,40,.05)}
+  h2{margin:0 0 4px;font-size:20px;color:var(--brand)}
+  .sub{margin:0 0 16px;color:var(--muted);font-size:14.5px}
+  .step{display:inline-block;background:var(--accent);color:#1d1d1d;font-weight:700;border-radius:999px;font-size:12.5px;padding:2px 10px;margin-bottom:8px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  label{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+  .req{color:var(--danger)}
+  input[type=text],input[type=email],input[type=tel],select{width:100%;font-size:16px;padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--ink)}
+  input:focus,select:focus,button:focus-visible{outline:3px solid rgba(24,168,216,.35);outline-offset:1px}
+  .script{background:var(--soft);border-left:4px solid var(--bright);border-radius:10px;padding:14px 16px;font-size:15.5px;margin-bottom:14px}
+  .script b{display:block;font-size:13px;color:var(--brand);margin-bottom:4px}
+  .rec{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  button{font:inherit;cursor:pointer;border:0;border-radius:999px;min-height:46px;padding:0 20px;font-weight:700}
+  .btn-rec{background:var(--danger);color:#fff}
+  .btn-rec.on{background:#7f1d1d}
+  .btn-2{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;color:var(--muted)}
+  .dot{width:12px;height:12px;border-radius:50%;background:var(--danger);display:none;animation:blink 1s infinite}
+  .on~.dot,.dot.show{display:inline-block}
+  @keyframes blink{50%{opacity:.2}}
+  @media(prefers-reduced-motion:reduce){.dot{animation:none}}
+  audio{width:100%;margin-top:12px}
+  .or{margin:14px 0 6px;color:var(--muted);font-size:14px}
+  .drop{display:block;border:2px dashed #b8c6d8;border-radius:14px;padding:20px;text-align:center;background:#fafcff;cursor:pointer;font-weight:600;color:var(--brand)}
+  .drop.drag{border-color:var(--bright);background:var(--soft)}
+  .drop small{display:block;font-weight:400;color:var(--muted);margin-top:4px}
+  .drop input{display:none}
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px}
+  .thumb{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .thumb img{display:block;width:100%;height:100px;object-fit:contain;background:#f8fafc}
+  .thumb span{display:block;font-size:12px;padding:4px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .thumb select{font-size:13px;padding:4px;border-radius:0;border:0;border-top:1px solid var(--line)}
+  .thumb button{position:absolute;top:4px;right:4px;min-height:28px;width:28px;padding:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px}
+  .ok{color:var(--good);font-weight:600;font-size:14px;margin-top:8px}
+  .err{color:var(--danger);font-weight:600;font-size:14px;margin-top:8px}
+  .legal{font-size:13.5px;color:#344054;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;max-height:260px;overflow:auto}
+  .legal p{margin:0 0 8px}
+  .check{display:flex;gap:10px;align-items:flex-start;margin:12px 0;font-weight:500;font-size:14.5px}
+  .check input{width:22px;height:22px;flex:none;margin-top:1px}
+  .send{width:100%;background:var(--brand);color:#fff;font-size:17px;min-height:54px}
+  .send:disabled{opacity:.6;cursor:not-allowed}
+  .foot{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+  #done{display:none;text-align:center}
+  #done h2{font-size:24px}
+</style>
+</head>
+<body>
+<header>
+  <img src="__LOGO__" alt="Floridian Policy Pros">
+  <h1>Partner Media Upload</h1>
+  <p>Thanks for partnering with Floridian Policy Pros. Record a short voice sample and upload your headshot or logo for our co-branded marketing. It takes about 3 minutes.</p>
+</header>
+<main>
+<form id="f" novalidate>
+  <section class="card">
+    <span class="step">Step 1</span>
+    <h2>Your information</h2>
+    <p class="sub">So we know whose materials these are.</p>
+    <div class="grid">
+      <div><label for="name">Full name <span class="req">*</span></label><input type="text" id="name" name="name" autocomplete="name" required></div>
+      <div><label for="company">Company <span class="req">*</span></label><input type="text" id="company" name="company" autocomplete="organization" required></div>
+      <div><label for="email">Email <span class="req">*</span></label><input type="email" id="email" name="email" autocomplete="email" required></div>
+      <div><label for="phone">Phone</label><input type="tel" id="phone" name="phone" autocomplete="tel"></div>
+      <div><label for="role">Your role</label>
+        <select id="role" name="role"><option>Mortgage lender / loan officer</option><option>Hard money / private lender</option><option>Realtor</option><option>Title / closing</option><option>Other partner</option></select></div>
+      <div><label for="nmls">License / NMLS # (if you want it shown)</label><input type="text" id="nmls" name="license"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <span class="step">Step 2</span>
+    <h2>Record your voice <span class="req">*</span></h2>
+    <p class="sub">Find a quiet room, hold your phone about 6 inches away, and read the script below in your normal speaking voice. Aim for 45 seconds or more.</p>
+    <div class="script"><b>Read this aloud:</b>
+      Hi, I'm <span id="sName">[your name]</span> with <span id="sCo">[your company]</span>. When my clients are buying a home, the right insurance can make or break the deal. That's why I work with Floridian Policy Pros. They shop multiple carriers, find real savings, and help keep my buyers' payments where they need to be. They respond fast, they communicate with everyone on the file, and they get us to the closing table on time. Whether it's a first home, an investment property, or a refinance, I trust them with my clients. If you're buying in Florida, reach out to my team and we'll connect you with Floridian Policy Pros. Thank you, and I look forward to helping you get home.
+    </div>
+    <div class="rec">
+      <button type="button" class="btn-rec" id="recBtn">Start recording</button>
+      <span class="dot" id="dot"></span>
+      <span class="timer" id="timer">0:00</span>
+      <button type="button" class="btn-2" id="redo" hidden>Record again</button>
+    </div>
+    <audio id="player" controls hidden></audio>
+    <div id="recMsg"></div>
+    <p class="or">Or upload a voice memo you already recorded (any audio or video file):</p>
+    <label class="drop" id="audDrop">Choose a voice memo<small>MP3, M4A, WAV, or a short video of you speaking</small>
+      <input type="file" id="audFile" accept="audio/*,video/*"></label>
+    <div id="audMsg"></div>
+  </section>
+
+  <section class="card">
+    <span class="step">Step 3</span>
+    <h2>Headshot and logo</h2>
+    <p class="sub">Upload a clear headshot and your company logo. Any picture you'd like us to use is welcome. Up to 6 files.</p>
+    <label class="drop" id="imgDrop">Tap to choose photos, or drag them here<small>JPG, PNG, HEIC, SVG, or PDF logo files</small>
+      <input type="file" id="imgFile" accept="image/*,.svg,.pdf,application/pdf" multiple></label>
+    <div class="thumbs" id="thumbs"></div>
+    <div id="imgMsg"></div>
+  </section>
+
+  <section class="card">
+    <span class="step">Step 4</span>
+    <h2>Marketing release <span class="req">*</span></h2>
+    <div class="legal" id="legal">
+      <p><b>Partner Marketing Consent and Media Release</b></p>
+      <p>By submitting this form, I grant Floridian Policy Pros and its owner, Carlos Sevilla, permission to use the materials I provide, including my name, company name, headshot, photographs, logo, and voice recording (together, the "Materials"), in co-branded marketing and advertising that promotes my business and our working relationship.</p>
+      <p><b>Voice and likeness.</b> I understand and agree that my voice recording and images may be edited and may be used with artificial intelligence tools to create video, audio, and narration in my likeness and voice, including new spoken words I did not personally record, for the purpose of promoting our partnership. Any such content will be consistent with my role and our working relationship.</p>
+      <p><b>Where it may appear.</b> Social media (including Facebook, Instagram, LinkedIn, TikTok, and YouTube), Google Business Profile, websites, email, printed materials, and other marketing channels.</p>
+      <p><b>Approval.</b> Floridian Policy Pros will send me a sample of any co-branded video for my review before it is first published.</p>
+      <p><b>Ownership.</b> I confirm that I own, or am authorized to share, the Materials, including any company logo, and that their use as described will not violate the rights of any other person or my employer's brand or compliance policies. I keep ownership of my Materials. No payment is owed for this permission.</p>
+      <p><b>Revoking.</b> I may withdraw this permission at any time by written notice to carlos@floridianpolicypros.com. After notice, no new content using my Materials will be created, and content already published will be removed from channels Floridian Policy Pros controls within a reasonable time.</p>
+    </div>
+    <label class="check"><input type="checkbox" id="agree" required> <span>I have read and agree to the Partner Marketing Consent and Media Release, including the use of my voice and likeness with AI tools as described above.</span></label>
+    <div class="grid">
+      <div><label for="sig">Type your full name as your signature <span class="req">*</span></label><input type="text" id="sig" autocomplete="name" required></div>
+      <div><label for="dt">Date</label><input type="text" id="dt" readonly></div>
+    </div>
+  </section>
+
+  <div id="formErr" class="err"></div>
+  <button type="submit" class="send" id="send">Send my materials</button>
+  <p class="foot">Questions? Call Floridian Policy Pros at 561-777-0777.</p>
+</form>
+
+<section class="card" id="done">
+  <h2>Thank you, you're all set</h2>
+  <p>Your voice sample, images, and signed release were sent to Floridian Policy Pros. We'll send you a sample to approve before anything is posted.</p>
+  <p class="sub">You can close this page.</p>
+</section>
+</main>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const MAX_TOTAL=30*1024*1024;
+let voice=null;            // {name,type,blob}
+let imgs=[];               // {name,type,blob,url,kind}
+const today=new Date();
+$("dt").value=today.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+
+// live script personalisation
+$("name").addEventListener("input",()=>{$("sName").textContent=$("name").value.trim()||"[your name]";});
+$("company").addEventListener("input",()=>{$("sCo").textContent=$("company").value.trim()||"[your company]";});
+
+function msg(el,text,bad){el.className=bad?"err":"ok";el.textContent=text;}
+function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function mb(n){return (n/1048576).toFixed(1)+" MB";}
+
+// ---- Recorder ----
+let mr=null,chunks=[],t0=0,tick=null,stream=null;
+const canRecord=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+if(!canRecord){$("recBtn").hidden=true;msg($("recMsg"),"Recording isn't supported in this browser. Use the voice memo upload below.",true);}
+function pickType(){const c=["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg"];for(const t of c){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(e){}}return "";}
+async function startRec(){
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}
+  catch(e){msg($("recMsg"),"Microphone access was blocked. Allow the microphone for this site, or upload a voice memo below.",true);return;}
+  const type=pickType();
+  mr=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);
+  chunks=[];
+  mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  mr.onstop=()=>{
+    const t=(mr.mimeType||type||"audio/webm").split(";")[0];
+    const blob=new Blob(chunks,{type:t});
+    const ext=t.includes("mp4")?"m4a":t.includes("ogg")?"ogg":"webm";
+    const secs=Math.round((Date.now()-t0)/1000);
+    voice={name:"voice-sample."+ext,type:t,blob};
+    $("player").src=URL.createObjectURL(blob);$("player").hidden=false;$("redo").hidden=false;
+    stream.getTracks().forEach(x=>x.stop());
+    msg($("recMsg"),secs<30?"Recorded "+fmt(secs)+". That's a little short, 45 seconds or more gives the best result. You can record again.":"Recorded "+fmt(secs)+". Play it back to check it, then continue.",secs<30);
+    $("audMsg").textContent="";
+  };
+  mr.start(1000);t0=Date.now();
+  $("recBtn").textContent="Stop recording";$("recBtn").classList.add("on");$("dot").classList.add("show");
+  tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);$("timer").textContent=fmt(s);if(s>=240)stopRec();},500);
+}
+function stopRec(){if(mr&&mr.state!=="inactive")mr.stop();clearInterval(tick);$("recBtn").textContent="Start recording";$("recBtn").classList.remove("on");$("dot").classList.remove("show");}
+$("recBtn").addEventListener("click",()=>{if(mr&&mr.state==="recording")stopRec();else startRec();});
+$("redo").addEventListener("click",()=>{voice=null;$("player").hidden=true;$("timer").textContent="0:00";$("recMsg").textContent="";startRec();});
+
+// ---- Voice memo upload ----
+function setAudio(f){
+  if(!f)return;
+  if(f.size>25*1024*1024){msg($("audMsg"),"That file is "+mb(f.size)+". Please use a file under 25 MB (a 1 to 2 minute memo is plenty).",true);return;}
+  voice={name:f.name||"voice-memo",type:f.type||"audio/mp4",blob:f};
+  $("player").src=URL.createObjectURL(f);$("player").hidden=false;
+  msg($("audMsg"),"Voice memo added: "+(f.name||"file")+" ("+mb(f.size)+")");
+}
+$("audFile").addEventListener("change",e=>setAudio(e.target.files[0]));
+
+// ---- Images ----
+function compress(file){return new Promise(res=>{
+  if(!/^image\/(jpeg|heic|heif|webp)/i.test(file.type)||file.size<4*1024*1024)return res(file);
+  const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const s=Math.min(1,2600/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);c.toBlob(b=>{URL.revokeObjectURL(u);res(b?new File([b],file.name.replace(/\.\w+$/,"")+".jpg",{type:"image/jpeg"}):file);},"image/jpeg",.9);};
+  im.onerror=()=>{URL.revokeObjectURL(u);res(file);};im.src=u;});}
+async function addImgs(list){
+  for(const f0 of list){
+    if(imgs.length>=6){msg($("imgMsg"),"Up to 6 files. Remove one to add another.",true);break;}
+    if(f0.size>15*1024*1024){msg($("imgMsg"),f0.name+" is over 15 MB, please choose a smaller version.",true);continue;}
+    const f=await compress(f0);
+    imgs.push({name:f.name||"image",type:f.type||"application/octet-stream",blob:f,url:/^image\//.test(f.type)?URL.createObjectURL(f):"",kind:/logo/i.test(f.name)?"Logo":"Headshot"});
+  }
+  drawThumbs();
+}
+function drawThumbs(){
+  const box=$("thumbs");box.textContent="";
+  imgs.forEach((it,i)=>{
+    const d=document.createElement("div");d.className="thumb";
+    const im=document.createElement("img");im.alt="";if(it.url)im.src=it.url;d.appendChild(im);
+    const sp=document.createElement("span");sp.textContent=it.name;d.appendChild(sp);
+    const sel=document.createElement("select");["Headshot","Logo","Other photo"].forEach(k=>{const o=document.createElement("option");o.textContent=k;if(k===it.kind)o.selected=true;sel.appendChild(o);});
+    sel.setAttribute("aria-label","What is this file");sel.addEventListener("change",()=>{it.kind=sel.value;});d.appendChild(sel);
+    const x=document.createElement("button");x.type="button";x.textContent="✕";x.setAttribute("aria-label","Remove "+it.name);x.addEventListener("click",()=>{imgs.splice(i,1);drawThumbs();});d.appendChild(x);
+    box.appendChild(d);
+  });
+  if(imgs.length)msg($("imgMsg"),imgs.length+" file"+(imgs.length>1?"s":"")+" added. Label each one as headshot or logo.");else $("imgMsg").textContent="";
+}
+$("imgFile").addEventListener("change",e=>{addImgs([...e.target.files]);e.target.value="";});
+[["imgDrop",fs=>addImgs([...fs])],["audDrop",fs=>setAudio(fs[0])]].forEach(([id,fn])=>{
+  const z=$(id);
+  z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("drag");});
+  z.addEventListener("dragleave",()=>z.classList.remove("drag"));
+  z.addEventListener("drop",e=>{e.preventDefault();z.classList.remove("drag");if(e.dataTransfer.files.length)fn(e.dataTransfer.files);});
+});
+
+// ---- Submit ----
+function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(blob);});}
+let sending=false;
+$("f").addEventListener("submit",async e=>{
+  e.preventDefault();if(sending)return;
+  const err=$("formErr");err.textContent="";
+  const need=[["name","your full name"],["company","your company"],["email","your email"]];
+  for(const [id,l] of need){if(!$(id).value.trim()){err.textContent="Please enter "+l+".";$(id).focus();return;}}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($("email").value.trim())){err.textContent="Please check your email address.";$("email").focus();return;}
+  if(!voice){err.textContent="Please record your voice or upload a voice memo (Step 2).";$("recBtn").scrollIntoView({behavior:"smooth",block:"center"});return;}
+  if(!$("agree").checked){err.textContent="Please check the box to agree to the marketing release.";$("agree").focus();return;}
+  if(!$("sig").value.trim()){err.textContent="Please type your full name as your signature.";$("sig").focus();return;}
+  const total=voice.blob.size+imgs.reduce((a,b)=>a+b.blob.size,0);
+  if(total>MAX_TOTAL){err.textContent="Your files total "+mb(total)+". Please keep everything under 30 MB (remove a photo or use a shorter memo).";return;}
+  sending=true;const btn=$("send");btn.disabled=true;btn.textContent="Sending… please keep this page open";
+  try{
+    const files=[{name:voice.name,type:voice.type,kind:"Voice sample",dataBase64:await b64(voice.blob)}];
+    for(const it of imgs)files.push({name:it.name,type:it.type,kind:it.kind,dataBase64:await b64(it.blob)});
+    const fields={name:$("name").value.trim(),company:$("company").value.trim(),email:$("email").value.trim(),phone:$("phone").value.trim(),role:$("role").value,license:$("nmls").value.trim()};
+    const consent={agreed:true,signature:$("sig").value.trim(),date:$("dt").value,signedAtISO:new Date().toISOString(),text:$("legal").innerText};
+    const r=await fetch("/api/partner",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({fields,consent,files})});
+    const out=await r.json().catch(()=>({}));
+    if(!r.ok||!out.ok)throw new Error(out.error||"Server error");
+    $("f").style.display="none";$("done").style.display="block";window.scrollTo(0,0);
+  }catch(x){
+    sending=false;btn.disabled=false;btn.textContent="Send my materials";
+    err.textContent="Something went wrong sending your files. Please try again, or call 561-777-0777.";
+  }
+});
+}
+</script>
+</body>
+</html>

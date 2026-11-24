@@ -95,7 +95,8 @@ const routes = {
   "/property":"property.html","/investment":"investment.html",
   "/renters":"renters.html","/condo":"renters.html",
   "/auto":"auto.html","/commercial":"commercial-auto.html","/rec":"recreation.html",
-  "/flood":"flood.html","/umbrella":"umbrella.html","/builders":"builders-risk.html"
+  "/flood":"flood.html","/umbrella":"umbrella.html","/builders":"builders-risk.html",
+  "/partner":"partner.html"
 };
 const PAGES = {};
 for (const [r,f] of Object.entries(routes)) PAGES[r] = Buffer.from(load(f),'utf8').toString('base64');
@@ -112,6 +113,7 @@ export default {
     let agent = "carlos";
     if (p === "/s" || p.indexOf("/s/") === 0) { agent = "samantha"; p = p.slice(2) || "/"; }
     if (p === "/api/submit") return handleSubmit(request, env, ctx);
+    if (p === "/api/partner") return handlePartner(request, env);
     if (p === "/api/debug") {
       if (url.searchParams.get("k") !== "fppz7q4m2x") return new Response("nope",{status:403});
       const dbg = { hasResendKey: !!env.RESEND_API_KEY, hasAnthropicKey: !!env.ANTHROPIC_API_KEY };
@@ -132,6 +134,53 @@ export default {
       { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
   }
 };
+
+async function handlePartner(request, env) {
+  if (request.method !== "POST") return j({ok:false,error:"POST only"},405);
+  let d; try { d = await request.json(); } catch(e){ return j({ok:false,error:"bad request"},400); }
+  const f = d.fields||{}, c = d.consent||{}, files = Array.isArray(d.files)?d.files:[];
+  if (!f.name || !f.email || !c.agreed || !c.signature || !files.length) return j({ok:false,error:"missing required items"},400);
+  const who = f.name + (f.company ? " (" + f.company + ")" : "");
+  const ip = request.headers.get("cf-connecting-ip")||"";
+  const consentRecord = "PARTNER MARKETING CONSENT AND MEDIA RELEASE - SIGNED RECORD\\n\\n"+
+    "Signed by (typed signature): "+c.signature+"\\nDate: "+(c.date||"")+"\\nTimestamp (UTC): "+(c.signedAtISO||new Date().toISOString())+"\\nIP address: "+ip+"\\n"+
+    "Agreed checkbox: YES\\n\\nPartner: "+f.name+"\\nCompany: "+(f.company||"")+"\\nEmail: "+f.email+"\\nPhone: "+(f.phone||"")+"\\n\\n----- RELEASE TEXT AS SHOWN -----\\n\\n"+(c.text||"");
+  const body = "NEW PARTNER MEDIA UPLOAD\\n\\n"+
+    "Name: "+f.name+"\\nCompany: "+(f.company||"")+"\\nRole: "+(f.role||"")+"\\nLicense/NMLS: "+(f.license||"")+"\\nEmail: "+f.email+"\\nPhone: "+(f.phone||"")+"\\n\\n"+
+    "Marketing release: SIGNED by "+c.signature+" on "+(c.date||"")+" (signed copy attached).\\n\\n"+
+    "FILES ATTACHED:\\n"+files.map(x=>"- "+(x.kind||"File")+": "+x.name).join("\\n");
+  const safe = s => String(s||"").replace(/[\\\\/:*?"<>|]/g,"-");
+  const base = safe(f.name)+" - "+safe(f.company||"Partner");
+  const attachments = [{ filename: base+" - Signed Media Release.txt", content: btoa(unescape(encodeURIComponent(consentRecord))) }];
+  let bytes = 0;
+  for (const x of files) {
+    const size = (x.dataBase64||"").length*0.75;
+    if (bytes + size > 35_000_000) break;
+    bytes += size;
+    attachments.push({ filename: base+" - "+safe(x.kind||"File")+" - "+safe(x.name), content: x.dataBase64 });
+  }
+  let out = {};
+  try {
+    const r = await fetch("https://api.resend.com/emails",{ method:"POST",
+      headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
+      body: JSON.stringify({ from: "Floridian Policy Pros Partners <quotes@floridianpolicypros.com>", to:[RECIPIENT], reply_to: f.email,
+        subject: "Partner Media Upload - "+who, text: body, attachments }) });
+    out = await r.json();
+  } catch(e){}
+  try { await fetch("https://ntfy.sh/fpp-quotes-ovsjc7k2m9",{method:"POST",signal:AbortSignal.timeout(3000),
+    headers:{"Title": out.id ? "Partner media received" : "Partner upload - EMAIL FAILED","Priority": out.id?"default":"urgent","Tags": out.id?"microphone":"warning"},
+    body: who+" sent voice + "+(files.length-1)+" image(s)"}); } catch(e){}
+  if (!out.id) return j({ok:false,error:"email failed"},502);
+  if (/@/.test(f.email)) {
+    try { await fetch("https://api.resend.com/emails",{ method:"POST",
+      headers:{"content-type":"application/json","authorization":"Bearer "+env.RESEND_API_KEY},
+      body: JSON.stringify({ from: "Floridian Policy Pros <quotes@floridianpolicypros.com>", to:[f.email],
+        subject: "We received your partner materials - Floridian Policy Pros",
+        text: "Hi "+(f.name.split(" ")[0]||"there")+",\\n\\nThank you for partnering with Floridian Policy Pros. We received your voice sample, images, and signed marketing release.\\n\\nWe will send you a sample of your co-branded video to approve before anything is posted. If you ever want to withdraw your permission, just reply to this email.\\n\\nCarlos Sevilla\\nFloridian Policy Pros\\nOffice 561-777-0777\\ncarlos@floridianpolicypros.com" }) });
+    } catch(e){}
+  }
+  return j({ok:true});
+}
 
 async function handleSubmit(request, env, ctx) {
   if (request.method !== "POST") return j({error:"POST only"},405);
